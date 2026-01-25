@@ -27,3 +27,10 @@
 - Lukittu tuotanto: Managed SaaS (pilvi), skaalautuvuus oletuksena.
 - Lisätty docs/09_PRODUCTION_SAAS.md
 - Päivitetty Tech Stack ja Acceptance Criteria SaaS-baseline-vaatimuksilla.
+
+## 2026-01-25 — Docs hardening for Cursor
+- Added golden references: docs/golden/* (kytkentäkuva.pdf, LAYOUT.pdf, IO_Export_Malli.xml, rendered PNGs)
+- Normalized UI Contract: 13_... authoritative; 15_... deprecated
+- Locked decisions incorporated from A/B answers (import/export UX, revision semantics, derived lists fields, cable grouping)
+- Added Cursor rules: .cursor/rules/teira.md
+- Added docs/CURSOR_START_PROMPT.md

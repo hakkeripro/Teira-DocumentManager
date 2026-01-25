@@ -1,44 +1,59 @@
-# Teira DocumentManager – Overview (Spec Pack v1.3)
+# 00 — Overview / North Star (v1)
 
-## Tavoite
-Rakennusautomaatio-urakoitsijan dokumenttihallinnan sovellus (web, desktop-first).  
-Sovellus tuottaa ja ylläpitää keskuksittain dokumentit, joista tärkein on **kytkentäkuvakirja**: muokattava näkymä, jonka **editori on sama kuin tuloste**.
+## North Star
+Teira DocumentManager on pilvessä ajettava (managed SaaS) dokumenttien suunnittelu- ja hallinta-alusta, jolla hallitaan **satoja/tuhansia** rakennusautomaation dokumentteja per projekti. Työkalun päätarkoitus on tukea suunnittelua ja työnjohtoa.
 
-## Keskeiset dokumenttityypit (tavoitetila)
-Jokaisella keskuksella on oma dokumenttikokonaisuus (center-scope):
-- **Kytkentäkuvat (WIRING_DIAGRAMS)**: moduulisivut + liittimet + symbolit + kaapelointi + kytkentäpaikat/laitteet
-- **Testauslista (TEST_LIST)**: oma editor + import
-- **Laiteluettelo (DEVICE_LIST)**: johdettu kytkentäkuvista + laitekirjastosta (BOM/oheistuotteet)
-- **Kaapeliluettelo (PULL_LIST / Cable list)**: johdettu kytkentäkuvien kaapeloinnista
-- **Layout (CENTER_LAYOUT)**: keskuksen kaappisuunnittelu (graafinen)
-- **Väyläkaaviot (BUS_DIAGRAMS)**: myöhempi dokumenttityyppi
-- **Kilpiluettelo (NAMEPLATES)**: 2-sarakkeinen muokattava lista toimitettaville kenttälaitteille
+Rajoitukset (anti-goals):
+- Ei täysimittaista CAD:ia
+- Ei yleistä sähkösuunnittelu-CAD/ECAD -järjestelmää
 
-> Huom: MappingSpec.yaml:ssa on Sprint 2 -tason docTypet. Uudet docTypet lisätään myöhemmissä speksipäivityksissä.
+Työkalun filosofia:
+- Vapaa muokkaus (ei pakotettua wizardia)
+- Järjestelmä **varoittaa poikkeamista** (esim. kaapeli puuttuu, pisteet muuttuvat importissa), mutta käyttäjä ohjaa lopputulosta.
 
-## Tuotanto (hard requirement)
-- Tuotantoversio on **pilvessä (Managed SaaS)**.
-- Käyttö voi kasvaa merkittävästi → arkkitehtuuri suunnitellaan **horisontaalisesti skaalautuvaksi** ja myöhempää job-queue/worker-mallia varten.
-- EU/GDPR: data ensisijaisesti EU-alueella.
+## V1 dokumenttityypit (in-scope)
 
-## Periaatteet
-- **Tenant-scope:** kaikki data aina `company_id` scopessa. Center-scope: `sub_center_id` missä relevanttia.
-- **Editor == tuloste:** kytkentäkuvien editori vastaa sivupohjaa, jonka perusteella PDF generoidaan.
-- **Draft vs Publish:** Draft on muokattavissa; Publish luo revision + PDF assetin.
-- **Import ei “korvaa editoria”:** import tuottaa pohjadatan, jonka päälle editorissa tehdään täydennykset (kaapelit, laitteet, symbolit).
-- **Symboli ≠ laite:** symbolit kiinnittyvät **liittimiin/terminaaleihin**; laite/kytkentäpaikka on kenttälaite-instanssi, jolla voi olla useita IO-kytkentöjä.
+Pakolliset (tavoitetila v1):
+- **Kytkentäkuvat** (`WIRING_DIAGRAMS`) + Työkirja-tab
+- **Laiteluettelo** (johdettu + muokattava)
+- **Kaapeliluettelo** (johdettu + muokattava)
+- **Kilpiluettelo** (johdettu + muokattava)
+- **Testauslista**
+- **Layout editor** (center layout) + revisiointi
+- **Väyläkaaviot** (toteutetaan myöhemmin; referenssit toimitetaan myöhemmin)
 
-## Automaatiopalvelin-tyypit ja oletussivut
-Keskuksella on `automation_server_type` (esim. `AS-P`, myöhemmin `AS-B`, jne).
-- Kun tyyppi = **AS-P**, keskukseen luodaan oletuksena sivut:
-  - **02 (PS)** ja **03 (AS-P)**, joiden **järjestys on lukittu**
-  - sivujen sisältö on silti muokattavissa (malli/variantti voi vaihdella)
-- Tulevaisuudessa tyyppien lisääminen (uudet palvelimet ja rakenteet) tehdään lisäämällä templaatit ja oletussivusäännöt.
+## Lukitut päätökset (A/B-vastaukset)
 
-## Kytkentäkuvakirja ja johdetut luettelot
-Kytkentäkuvien muokkaus tuottaa tiedot, joiden pohjalta muodostetaan:
-- kaapeliluettelo (kaapelit + parit/johdin + päät)
-- laiteluettelo (kenttälaitteet + BOM/oheistuotteet)
-- kilpiluettelo (toimitettavat laitteet: rivi1 tunnus, rivi2 kuvaus)
+### UI pariteetti
+- Kytkentäkuvaeditorin visuaali: **95%** referensseihin.
+- Sarakkeet, järjestys ja otsikot: **1:1** referenssien kanssa.
+- Työkirja-tab: sarakkeet + järjestys + otsikot **1:1** referenssin kanssa.
 
-Katso tarkemmin: `docs/11_WIRING_EDITOR_VNEXT.md`, `docs/13_DERIVED_LISTS_AND_NAMEPLATES.md`, `docs/14_LAYOUT_EDITOR.md`.
+### Navigaatio ja UX
+- Vasen puu säilyy. Lisäys: kansio-ikoni ja “kansiomaiset” (mutta **vain UI-ryhmittely**) avattavat/suljettavat ryhmät.
+- Ei erillistä Import/Export-sivua kytkentäkuville: Import/Export toiminnot ovat **kytkentäkuvassa ja Työkirjassa**.
+
+### Import/Export
+- Vain **kytkentäkuville** tarvitaan XML export (ObjectSet/IO Export -tyyppinen). Muissa dokumenteissa export = copy/paste taulukosta.
+- XML export on oltava **rakenteeltaan ja kentiltään** sama kuin `docs/golden/IO_Export_Malli.xml` (golden fixture).
+- Export ei sisällä PS/AS-P -sivuja.
+- Import: jos moduulit eivät täsmää → error ja estetään. Jos pisteet muuttuvat → varoitus + banneri.
+
+### Revisiohallinta
+- Draft vs Publish: Publish tuottaa PDF:t ym. assetit.
+- Revisioformaatti kaikille dokumenteille: **A..Z, AA..AZ, BA..**
+- Käyttäjä voi tehdä useita Saveja ilman revision kirjaimen kasvua.
+- Importin jälkeen UI näyttää “Import changes pending” -bannerin ja hyväksyntä/savetoiminto luo revision (ks. `04_REVISION_WORKFLOW.md`).
+
+### Cable grouping ja multi-IO
+- Kaapelit johdetaan ja ryhmitellään regex/konfiguroitavalla säännöllä; oletus: “ennen viimeistä `_`”.
+- Jos tunnuksessa ei ole erotinta → ei automaattiryhmittelyä.
+- Laitteella voi olla useita IO:ta: laitevalinnassa voidaan valita samaan laitteeseen kuuluvat pisteet → yhteinen kaapeli.
+
+### Derived lists
+- Laiteluettelo v1: **valmistaja, koodi, määrä** (määrä johdettu, mutta muokattava; avain = koodi; case-sensitive).
+- Kaapeliluettelo v1: tunnus, tyyppi, mistä, mihin, vedetty-checkbox, kommentti; manuaalinen override-ikoni + hover.
+- Kilpiluettelo: 2 riviä (tunnus + kuvaus) toimitettaville laitteille.
+
+## Golden references
+Katso: `15_GOLDEN_REFERENCES.md`.

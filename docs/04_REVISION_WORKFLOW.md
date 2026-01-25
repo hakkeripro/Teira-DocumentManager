@@ -1,37 +1,50 @@
-# Revision Workflow v1.3 (Teira DocumentManager)
+# Revision Workflow v2 — Draft vs Publish (lukittu)
 
-## Draft vs Publish
-- Draft: muokattava taulukko/tila (ei PDF:tä pakollisesti).
-- Publish: luo `document_revision` ja generoi PDF assetin.
+## Tavoite
+Revisiohallinnan pitää olla käyttäjän ohjaama ja selkeä:
+- Käyttäjä voi tehdä useita Saveja ilman revisiokirjaimen kasvua.
+- Publish luo revisioassetit (PDF, XML, XLSX jne.).
+- Import-muutokset eivät tule voimaan “hiljaa”, vaan niistä ilmoitetaan ja käyttäjä hyväksyy.
 
 ## Revisioformaatti
-- Näytettävä rev: `{rev_letter}-{project.code}` (esim. `A-XXX`)
-- Rev-kirjain kasvaa A→B→…→Z
-- MVP: Z:n jälkeen estetään publish tai sovitaan AA myöhemmin.
+- Rev-kirjain kasvaa: **A → B → ... → Z → AA → AB → ... → AZ → BA ...**
+- Sama logiikka koskee kaikkia dokumenttityyppejä.
 
-## Dokumenttikohtaisuus (keskuskohtainen)
-- Jokaisella dokumentilla oma revisiohistoria **per keskus**:
-  - Kytkentäkuvat
-  - Testauslista
-  - Vetoluettelo
-  - Laiteluettelo
+## Käsitteet
+- **Draft**: muokattava tila (editor/taulukko), voi tallentua useita kertoja ilman revisiokirjaimen muutosta.
+- **Revision**: käyttäjän hyväksymä, versionumerolla (rev) varustettu snapshot.
+- **Publish**: tuottaa assetit (PDF, XML, XLSX, JSON snapshot) revisiolle.
 
-Tarkennus: revisiohistoria kasvaa per **(sub_center + document type)**. 
-Sama rev-merkintä `{rev_letter}-{project.code}` on yksiselitteinen keskuksen kontekstissa (UI näyttää keskuksen nimen/koodin erikseen).
+## Lukittu käyttäjäpolku
 
-## PDF-tiedostonimi (suositus)
-PDF/Export assettien tiedostonimeen kannattaa lisätä myös keskuksen koodi/nimi, esim:
-- `{docType}-{rev}-{project.code}-{subCenter.code}.pdf`
+### 1) Normaali muokkaus
+1) Käyttäjä muokkaa (kytkentäkuva / työkirja / listat / layout).
+2) **Save** tallentaa draftin (ei kasvata rev-kirjainta).
+3) **Publish**:
+   - jos draft ≠ viimeisin revision snapshot → luodaan uusi revisio (rev+1) ja siihen assetit
+   - jos draft == viimeisin revision snapshot → voidaan generoida assetit uudelleen samaan revisioon (implementation choice), mutta UI ei saa kasvattaa rev-kirjainta ilman muutosta.
 
-Tämä helpottaa, kun samassa projektissa on useita keskuksia.
+### 2) Import-muutokset (pending)
+1) Importin jälkeen, jos pisteet muuttuvat: UI näyttää bannerin **"Import changes pending"**.
+2) Käyttäjä näkee previewn ja hyväksyy muutokset.
+3) Hyväksyntä tuottaa **uuden Revisionin** (rev kasvaa) ja ilmoittaa käyttäjälle (toast/modal).
+4) Publish tuottaa assetit kyseiselle revisiolle.
 
+Tämä ratkaisee kaksi vaatimusta:
+- useita Saveja ilman rev-kasvua (normaalimuokkaus)
+- importin hyväksyntä aiheuttaa "revisiopompun" (rev kasvaa), eikä muutokset jää “välitilaan”.
 
-## PDF download (API)
-- `GET /api/revisions/:revisionId/pdf`
-  - Local storage: streamaa PDF:n
-  - Supabase storage: redirect signed URL:iin
+## Dokumenttikohtaisuus
+- Jokaisella dokumentilla oma revisiohistoria per keskus:
+  - (company_id, project_id, center_id/sub_center_id, docType)
 
-UI tarjoaa linkin revision riviltä sekä docType-sivulta.
+## Assetit (lukittu)
+Publish tuottaa vähintään:
+- PDF
+- JSON snapshot (editor state)
+- XML export (kytkentäkuvat)
+- XLSX export (jos myöhemmin otetaan käyttöön)
 
-## Huomio kytkentäkuviin
-Kytkentäkuvissa Publish/PDF renderöinti perustuu tavoitetilassa **page modeliin**, jossa editori on sama kuin tuloste.
+## UI
+- Uudesta revisiosta ilmoitus käyttäjälle.
+- Revisiolistaus dokumentin yhteydessä.

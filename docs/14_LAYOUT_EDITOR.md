@@ -1,22 +1,29 @@
-# 14 – Layout Editor (Center Layout) v1.3
+# 14 — Layout Editor (Center Layout) v2 — must have
 
-Layout-editori on keskuksen kaappisuunnittelu, jossa käyttäjä:
-1) valitsee kaappirungon (esim. `SXWOS-2`)
-2) raahaa moduulit ja oheislaitteet paikoilleen
-3) näkee määrälaskennan/optioiden vaikutukset
+Layout-editori on keskuksen (center) kaappisuunnittelu.
 
-## Yhteys kytkentäkuviin
-- Layoutissa käytettävät moduulit perustuvat samoihin module templateihin kuin kytkentäkuvien sivut.
-- Layout-komponentit linkitetään joko:
-  - `wiring_page_id` (moduuli-instanssi) tai
-  - `module_template_id` (jos sivua ei vielä ole luotu)
+## Golden reference
+- `docs/golden/LAYOUT.pdf`
+- `docs/golden/rendered/layout_p0.png`
 
-## Minimitoiminnallisuus (ensimmäinen versio)
-- Kaappirungon valinta (taustakuva / SVG / canvas)
-- Moduulin sijoitus (drag/drop, snap-to-grid)
-- Komponenttien metadata (slot / paikka / label)
-- Export: layoutin state JSONB (myöhempää renderöintiä varten)
+## Tavoite
+- Käyttäjä rakentaa keskusrungon layoutin graafisesti.
+- Editorissa on omat graafiset komponentit (drag/drop), joita voi siirtää ja sijoittaa valittuun runkoon.
+- Layout linkittyy kytkentäkuviin ja mahdollistaa osoite-/slot-listojen hallinnan.
 
-> Varsinainen graafinen renderöinti ja laajempi komponenttikirjasto laajennetaan myöhemmin.
+## Must-have v1
+1) Keskusrungon valinta (tausta / rungon kuva)
+2) Komponenttien lisääminen, siirto, poistaminen
+3) Snap/grid (vähintään perus)
+4) Komponentin metadata:
+   - tunnus/label
+   - paikka/slot
+   - (optiona) linkitys wiring-moduuliin
+5) **Osoitelista synkassa kytkentäkuvien kanssa**
+   - Layoutin komponenteille voidaan liittää osoitteita/slotteja, ja listaa voidaan verrata kytkentäkuvien moduuleihin.
+6) Layout tallennetaan ja **versioidaan kuten muut dokumentit** (oma revisiohistoria).
 
-
+## Datamalli (suuntaa antava)
+- Document type: `LAYOUT`
+- `document.settings_jsonb.layout` sisältää editorin state JSON:n
+- Publish tuottaa vähintään PDF:n (myöhemmin), mutta v1:ssä voidaan tallentaa snapshot.

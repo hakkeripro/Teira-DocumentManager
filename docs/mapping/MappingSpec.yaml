@@ -142,29 +142,6 @@ targets:
           route:       { path: "Route", transforms: [trim] }
           comment:     { path: "Comment", transforms: [trim] }
 
-  - docType: "NAMEPLATE_LIST"         # Prisma enum: NAMEPLATE_LIST
-    identity_keys: ["tag"]
-    canonical:
-      header_fields:
-        - project_code
-        - center_code
-      row_fields:
-        - tag            # required
-        - description
-    sources:
-      xlsx:
-        sheet: "NAMEPLATE_LIST"
-        header_row: 1
-        row_start: 2
-        columns:
-          tag:          { header: "Tag", required: true, transforms: [trim] }
-          description:  { header: "Description", transforms: [trim] }
-      xml:
-        root_array_path: "NameplateList.Nameplates.Nameplate"
-        fields:
-          tag:          { path: "Tag", required: true, transforms: [trim] }
-          description:  { path: "Description", transforms: [trim] }
-
   - docType: "TEST_LIST"              # Prisma enum: TEST_LIST
     identity_keys: ["test_id"]
     canonical:

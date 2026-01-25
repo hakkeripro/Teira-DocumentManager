@@ -1,5 +1,31 @@
 # Changelog
 
+## Sprint 1 (2026-01-25)
+### Print-Grid Parity
+- Updated wiring editor print-grid columns to match `docs/ui_refs/wiring_editor_v2/Kytkentakuva_DI16.png` exactly
+- New columns: Tunnus, Teksti, Liitin, Kaapeli 1 (Pari nro/Tyyppi koko nro), Välikytkentäpaikka, Kaapeli 2 (Tyyppi/Pari), Minne johdetaan (Liitin/Kytkentäpaikka), Symboli
+- Extended `WiringV2TerminalRow` with new fields: `description`, `cable1Pair`, `intermediateTerminal`, `cable2Pair`, `destinationConnector`
+
+### Folder UI Grouping
+- Implemented folder-based organization in Pages tree (UI-only, not persisted)
+- Two default groups: "System Pages" (PS/AS-P) and "IO Modules"
+- Collapsible with folder icons (📁/📂)
+
+### In-Editor Import/Export
+- Added Import XML and Export XML buttons to both Kytkentäkuva and Työkirja tabs
+- Removed separate page navigation requirement for WIRING import/export
+- Tab renamed from "Editor" to "Kytkentäkuva" for Finnish UI consistency
+
+### Import Pending Banner
+- Implemented "Import changes pending" banner per `docs/04_REVISION_WORKFLOW.md`
+- Shows preview of changes (added/modified counts)
+- Accept action signals revision creation (backend implementation pending - see OI-006)
+- Dismiss action cancels pending import
+
+### Open Items
+- Added OI-006: Import commit revision creation (backend pending)
+- Added OI-007: Workbook columns reference parity (Sprint 2)
+
 ## v1.4 (2026-01-24)
 - Lukittu WIRING_DIAGRAMS-editorin UI-sopimus: `docs/15_UI_CONTRACT_WIRING_EDITOR.md` + referenssikuvat (`docs/ui_refs/wiring_editor_v2/*`).
 - Korjattu AS-P-keskuksen lukitut oletussivut: **01 (PS)** ja **02 (AS-P)**.

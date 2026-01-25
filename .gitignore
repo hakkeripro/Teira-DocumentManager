@@ -1,0 +1,25 @@
+# deps
+node_modules
+
+# next
+.next
+out
+
+# env
+.env
+.env.local
+.env.*.local
+
+# prisma
+prisma/dev.db
+
+# local assets
+var/storage/**
+!var/storage/.gitkeep
+
+# misc
+*.log
+.DS_Store
+
+tsconfig.tsbuildinfo
+

@@ -1,0 +1,1079 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ObjectSet ExportMode="Standard" Note="TypesFirst" SemanticsFilter="Standard" Version="6.0.4.9008">
+  <MetaInformation>
+    <ExportMode Value="Standard"/>
+    <SemanticsFilter Value="None"/>
+    <RuntimeVersion Value="6.0.4.9008"/>
+    <SourceVersion Value="6.0.4.9008"/>
+    <ServerFullPath Value="/C-T810-VAK14-C2750"/>
+  </MetaInformation>
+<ExportedObjects>
+  <OI NAME="03_DI-16" TYPE="io.DI16">
+    <PI Name="ModuleID" Value="3"/>
+    <OI DESCR="Konekeskuksen pääkytkin" NAME="D-IVK69-EI01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="1"/>
+      <PI Name="Invert" Value="0"/>
+      <PI Name="NOTE2" Value="ei saatavilla koneen sisäisistä kytkennöistä. KOJA? #13.3.2025 sesa526893"/>
+    </OI>
+    <OI DESCR="Tuloilmapuhallin indikointi" NAME="D-IVK69-SC10_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="2"/>
+      <PI Name="NOTE2" Value="KOJA:n pikaliitin viallinen, poistettu välistä #14.3.2025 sesa498945"/>
+    </OI>
+    <OI DESCR="Poistoilmapuhallin indikointi" NAME="D-IVK69-SC30_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="3"/>
+    </OI>
+    <OI DESCR="LTO:n hälytys" NAME="D-IVK69-SC02_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="4"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value="LTO hälytys ei toimi oikein. IO-piste toimii.  pakettikoneen omia kytkentöjä. KOJA selvittään #13.3.2025 sesa526893"/>
+    </OI>
+    <OI DESCR="Jäätymissuojan hälytys" NAME="D-IVK69-TZA49_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="5"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="Lämmityspatterin pumppu tilatieto" NAME="D-IVK69-PU40_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="6"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="Höyrykostuttimen tilatieto" NAME="D-IVK69-KO07_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="7"/>
+      <PI Name="NOTE2" Value="jonpilla #28.3.2025 jiskoskela"/>
+    </OI>
+    <OI DESCR="Höyrykostuttimen hälytys" NAME="D-IVK69-KO07_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="8"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value="jonpilla #28.3.2025 jiskoskela"/>
+    </OI>
+    <OI DESCR="Paloilmoitinjärjestelmä ennakko" NAME="C-T810-PH01_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="9"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value="Jomppaamalla palokeskukselta #15.3.2025 jiskoskela"/>
+    </OI>
+    <OI DESCR="Paloilmoitinjärjestelmä palo" NAME="C-T810-PH02_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="10"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Paloilmoitinjärjestelmä huolto" NAME="C-T810-PH03_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="11"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Paloilmoitinjärjestelmä vika" NAME="C-T810-PH04_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="12"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Kaikki teollisuuden turvavalokeskukset TVK-8" NAME="C-T810-TVK01_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="15"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Storage D1700" NAME="D-T810-ES06_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="16"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="Paloilmoitinjärjestelmä vikasiirtolinja" NAME="C-T810-PH05_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="13"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Paloilmoitinjärjestelmä irtikytkentä" NAME="C-T810-PH06_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="14"/>
+      <PI Name="Invert" Value="1"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+  </OI>
+  <OI NAME="04_DI-16_2" TYPE="io.DI16">
+    <PI Name="ModuleID" Value="4"/>
+    <OI DESCR="Pohjoispäädyn valoimainokset tilatieto" NAME="D-T810-UV01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="1"/>
+      <PI Name="NOTE2" Value="Testataan bravidan kanssa #6.5.2025 jiskoskela"/>
+    </OI>
+    <OI DESCR="Pohjoispäädyn valoimainokset hälytys" NAME="D-T810-UV01_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="2"/>
+      <PI Name="Invert" Value="1"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value="Ei ole"/>
+    </OI>
+    <OI DESCR="31-2RK-09, Ylijännitesuoja lauennut Product D1603" NAME="D-T810-ES07_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="3"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="31-2RK-010, Ylijännitesuoja lauennut Storage D1700" NAME="D-T810-ES08_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="4"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="31-2RK-09, Ylijännitesuoja lauennut Mee me room C1750" NAME="C-T810-ES07_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="5"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="32-2RK-04, Ylijännitesuoja lauennut Serverihuone C2650" NAME="C-T810-ES09_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="6"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="32-1RK-05, Ylijännitesuoja lauennut Serverihuone C2650" NAME="C-T810-ES10_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="7"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="Kattokaivojen sulatukset tilatieto" NAME="C-T810-SVK06_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="8"/>
+    </OI>
+    <OI DESCR="Hissihälytys Hissi 8" NAME="C-T810-EA03_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="9"/>
+      <PI Name="Invert" Value="1"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="IV-HÄTÄ-SEIS SPOK:n kannessa" NAME="C-T810-HS01-C1732_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="10"/>
+      <PI Name="Invert" Value="1"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="D-SPH63-SPF01 SP-puhaltimen käyntitila" NAME="D-SPH63-SPF01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="11"/>
+    </OI>
+    <OI DESCR="D-SPH63 SP-luukun kiinni-tieto" NAME="D-SPH63-SPL01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="13"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="D-SPH64-SPF01 SP-puhaltimen käyntitila" NAME="D-SPH64-SPF01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="12"/>
+    </OI>
+    <OI DESCR="D-SPH64 SP-luukun kiinni-tieto" NAME="D-SPH64-SPL01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="14"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="D-SPH65-SPF01 SP-puhaltimen käyntitila" NAME="D-SPH65-SPF01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="15"/>
+    </OI>
+    <OI DESCR="E-SPH55-SPF01 SP-puhaltimen käyntitila" NAME="E-SPH55-SPF01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="16"/>
+    </OI>
+  </OI>
+  <OI NAME="05_DI-16_2" TYPE="io.DI16">
+    <PI Name="ModuleID" Value="5"/>
+    <OI DESCR="D-SPH65 SP-luukun kiinni-tieto" NAME="D-SPH65-SPL01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="1"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="E-SPH55 SP-luukun kiinni-tieto" NAME="E-SPH55-SPL01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="2"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="E-SPH56-SPF01 SP-puhaltimen käyntitila" NAME="E-SPH56-SPF01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="3"/>
+    </OI>
+    <OI DESCR="E-SPH56 SP-luukun kiinni-tieto" NAME="E-SPH56-SPL01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="5"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="E-SPH57-SPF01 SP-puhaltimen käyntitila" NAME="E-SPH57-SPF01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="4"/>
+    </OI>
+    <OI DESCR="E-SPH57 SP-luukun kiinni-tieto" NAME="E-SPH57-SPL01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="6"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="E-SPH58-SPF01 SP-puhaltimen käyntitila" NAME="E-SPH58-SPF01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="7"/>
+    </OI>
+    <OI DESCR="E-SPH58 SP-luukun kiinni-tieto" NAME="E-SPH58-SPL01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="9"/>
+      <PI Name="Invert" Value="1"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="D-SPH54-SPF01 SP-puhaltimen käyntitila" NAME="D-SPH54-SPF01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="8"/>
+    </OI>
+    <OI DESCR="D-SPH54 SP-luukun kiinni-tieto" NAME="D-SPH54-SPL01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="10"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="32-2RK-04 Itsetestaava vvsk lauennut" NAME="C-T810-ES13_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="11"/>
+      <PI Name="Invert" Value="1"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="32-1RK-05 Itsetestaava vvsk lauennut" NAME="C-T810-ES14_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="12"/>
+      <PI Name="Invert" Value="1"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Paineilmakuivaimen hälytys" NAME="C-TPI50-PIJK50002-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="13"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Paineilmakompressorin hälytys" NAME="C-TPI50-PIK50002-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="14"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Paineilmakuivaimen hälytys" NAME="C-TPI50-PIJK50003-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="15"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Paineilmakompressorin hälytys" NAME="C-TPI50-PIK50003-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="16"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+  </OI>
+  <OI NAME="06_DI-16_2" TYPE="io.DI16">
+    <PI Name="ModuleID" Value="6"/>
+    <OI DESCR="IVKH C2750- savunpoistoluukku auki tilatieto" NAME="C-T810-SPLK-C2750-Auki_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="1"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="IVKH C2750- savunpoistoluukku kiinni tilatieto" NAME="C-T810-SPLK-C2750-Kiinni_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="3"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="IVKH C2750- savunpoistoluukku vika" NAME="C-T810-SPLK-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="2"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Porrashuoneen G- savunpoistoluukku auki tilatieto" NAME="E-T810-SPLK-G-Auki_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="4"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="Porrashuoneen G- savunpoistoluukku kiinni tilatieto" NAME="E-T810-SPLK-G-Kiinni_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="6"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="Porrashuoneen G- savunpoistoluukku vika" NAME="E-T810-SPLK-G_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="5"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Porrashuoneen F- savunpoistoluukku auki tilatieto" NAME="C-T810-SPLK-F-Auki_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="7"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="Porrashuoneen F- savunpoistoluukku kiinni tilatieto" NAME="C-T810-SPLK-F-Kiinni_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="9"/>
+      <PI Name="Invert" Value="1"/>
+    </OI>
+    <OI DESCR="Porrashuoneen F- savunpoistoluukku vika" NAME="C-T810-SPLK-F_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="8"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Vedenjäähdytyskone tilatieto" NAME="C-VJK51_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="10"/>
+      <PI Name="NOTE2" Value="jää pois #11.4.2025 jiskoskela"/>
+    </OI>
+    <OI DESCR="Vedenjäähdytyskone hälytys" NAME="C-VJK51_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="11"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value="jää pois #11.4.2025 jiskoskela"/>
+    </OI>
+    <OI DESCR="Pumppu tilatieto" NAME="C-J70-PU50-C2750_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="12"/>
+    </OI>
+    <OI DESCR="Vedenjäähdytyskone tilatieto" NAME="C-VJK52_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="13"/>
+      <PI Name="NOTE2" Value="jää pois #11.4.2025 jiskoskela"/>
+    </OI>
+    <OI DESCR="Vedenjäähdytyskone hälytys" NAME="C-VJK52_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="14"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value="jää pois #11.4.2025 jiskoskela"/>
+    </OI>
+    <OI DESCR="Pumpun käyntitila" NAME="C-VJK51-PU51-C2750_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="15"/>
+      <PI Name="NOTE2" Value="tyhjä piste #4.4.2025 jiskoskela"/>
+    </OI>
+    <OI DESCR="Lämityspatterin pumppu- tilatieto" NAME="C-LIV50-PU5038-C2750_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="16"/>
+    </OI>
+  </OI>
+  <OI NAME="07_DI-16_2" TYPE="io.DI16">
+    <PI Name="ModuleID" Value="7"/>
+    <OI DESCR="Sulkuventtiili kiinni hälytys" NAME="C-SPR0000-SV0016-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="1"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Sulkuventtiili kiinni hälytys" NAME="C-ELV0025-SV0001-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="2"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Sulkuventtiili kiinni hälytys" NAME="C-ELV0025-SV0002-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="3"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="C2750 Laukaisukeskus aktivoitunut hälytys" NAME="C-ELV0025_26-LAK0001-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="4"/>
+      <PI Name="Invert" Value="1"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value="ALARM #20.3.2025 sesa498945"/>
+    </OI>
+    <OI DESCR="Palohälytys" NAME="C-ELV0025-PS0001-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="5"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Ilmanpaineen valvonta alarajahälytys" NAME="C-ELV0025-PS0002-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="6"/>
+      <PI Name="Invert" Value="1"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Sulkuventtiili kiinni hälytys" NAME="C-ELV0026-SV0001-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="7"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Sulkuventtiili kiinni hälytys" NAME="C-ELV0026-SV0002-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="8"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="C2750 Laukaisukeskus vika hälytys" NAME="C-ELV0025_26-LAK0001-VIKA-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="9"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value="TROUBLE/SUPERVISORY #20.3.2025 sesa498945"/>
+    </OI>
+    <OI DESCR="Palohälytys" NAME="C-ELV0026-PS0001-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="10"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Ilmanpaineen valvonta alarajahälytys" NAME="C-ELV0026-PS0002-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="11"/>
+      <PI Name="Invert" Value="1"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Kaasusammutus, Palo C2600" NAME="C-T810-LAK01-C2600_PALO_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="15"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+    <OI DESCR="Kaasusammutus, Palo C2650" NAME="C-T810-LAK01-C2650_PALO_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="14"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="Kaasusammutus, Vika C2650" NAME="C-T810-LAK01-C2650_VIKA_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="13"/>
+      <PI Name="LEDColor" Value="1"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="Lämityspatterin pumppu- hälytys" NAME="C-LIV50-PU5038-C2750_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="12"/>
+      <PI Name="LEDColor" Value="1"/>
+    </OI>
+  </OI>
+  <OI NAME="08_UI-16" TYPE="io.UI16">
+    <PI Name="ModuleID" Value="8"/>
+    <OI DESCR="Tuloilmasuodatin paine-ero" NAME="D-IVK69-PDIE01_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230002" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x230002" Value="500"/>
+      <PI Name="InputChannelNumber" Value="6"/>
+      <PI Name="LogArray" Unit="0x230002"/>
+      <PI Name="Offset" Unit="0x230002" Value="0"/>
+      <PI Name="Resolution" Value="0.5"/>
+      <PI Name="Value" Unit="0x230002"/>
+    </OI>
+    <OI DESCR="Poistoilmasuodatin paine-ero" NAME="D-IVK69-PDIE30_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230002" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x230002" Value="500"/>
+      <PI Name="InputChannelNumber" Value="7"/>
+      <PI Name="LogArray" Unit="0x230002"/>
+      <PI Name="Offset" Unit="0x230002" Value="0"/>
+      <PI Name="Resolution" Value="0.5"/>
+      <PI Name="Value" Unit="0x230002"/>
+    </OI>
+    <OI DESCR="LTO:n paine-ero" NAME="D-IVK69-PDIE60_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230002" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x230002" Value="100"/>
+      <PI Name="InputChannelNumber" Value="8"/>
+      <PI Name="LogArray" Unit="0x230002"/>
+      <PI Name="Offset" Unit="0x230002" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x230002"/>
+    </OI>
+    <OI DESCR="Tuloilmapuhallin virtaus" NAME="D-IVK69-FE10_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0xF0006" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0xF0006" Value="2000"/>
+      <PI Name="InputChannelNumber" Value="9"/>
+      <PI Name="LogArray" Unit="0xF0006"/>
+      <PI Name="Offset" Unit="0xF0006" Value="0"/>
+      <PI Name="Resolution" Value="2"/>
+      <PI Name="Value" Unit="0xF0006"/>
+    </OI>
+    <OI DESCR="Poistoilmapuhallin virtaus" NAME="D-IVK69-FE30_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0xF0006" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0xF0006" Value="2000"/>
+      <PI Name="InputChannelNumber" Value="10"/>
+      <PI Name="LogArray" Unit="0xF0006"/>
+      <PI Name="Offset" Unit="0xF0006" Value="0"/>
+      <PI Name="Resolution" Value="2"/>
+      <PI Name="Value" Unit="0xF0006"/>
+    </OI>
+    <OI DESCR="Poistoilmakanavan hiilidioksidi" NAME="D-IVK69-QE30_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200002" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200002" Value="2000"/>
+      <PI Name="InputChannelNumber" Value="11"/>
+      <PI Name="LogArray" Unit="0x200002"/>
+      <PI Name="NOTE2" Value="väyläpiste #13.3.2025 sesa526893"/>
+      <PI Name="Offset" Unit="0x200002" Value="0"/>
+      <PI Name="Resolution" Value="2"/>
+      <PI Name="Value" Unit="0x200002"/>
+    </OI>
+    <OI DESCR="Lämmityspatterin paluuvesi lämpötila" NAME="D-IVK69-TE49_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x280001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x280001" Value="100"/>
+      <PI Name="InputChannelNumber" Value="12"/>
+      <PI Name="LogArray" Unit="0x280001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="Offset" Unit="0x280001" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x280001"/>
+    </OI>
+    <OI DESCR="Raitisilma lämpötila" NAME="D-IVK69-TE01_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="1"/>
+      <PI Name="ThermistorType" Value="3"/>
+    </OI>
+    <OI DESCR="Tuloilma LTO:n jälkeen lämpötila" NAME="D-IVK69-TE02_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="2"/>
+      <PI Name="NOTE2" Value="mittaus puuttuu. konetoimituksen sisältyvä. KOJA selvittään #13.3.2025 sesa526893"/>
+      <PI Name="ThermistorType" Value="3"/>
+    </OI>
+    <OI DESCR="Tuloilma lämmityspatterin jälkeen lämpötila" NAME="D-IVK69-TE04_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="3"/>
+      <PI Name="ThermistorType" Value="3"/>
+    </OI>
+    <OI DESCR="Tuloilma jäähdytyspatterin jälkeen lämpötila" NAME="D-IVK69-TE05_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="4"/>
+      <PI Name="ThermistorType" Value="3"/>
+    </OI>
+    <OI DESCR="Jäteilma lämpötila" NAME="D-IVK69-TE31_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="5"/>
+      <PI Name="ThermistorType" Value="3"/>
+    </OI>
+    <OI DESCR="Ulkolämpötila mittaus" NAME="E-T810-TE00_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x280001" Value="-50"/>
+      <PI Name="EngTopOfScale" Unit="0x280001" Value="50"/>
+      <PI Name="InputChannelNumber" Value="13"/>
+      <PI Name="LogArray" Unit="0x280001"/>
+      <PI Name="Offset" Unit="0x280001" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x280001"/>
+    </OI>
+    <OI DESCR="Ulkovaloisuus mittaus" NAME="E-T810-XE00_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x180001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x180001" Value="10000"/>
+      <PI Name="InputChannelNumber" Value="14"/>
+      <PI Name="LogArray" Unit="0x180001"/>
+      <PI Name="Offset" Unit="0x180001" Value="0"/>
+      <PI Name="Resolution" Value="10"/>
+      <PI Name="Value" Unit="0x180001"/>
+    </OI>
+    <OI DESCR="Paine-ero vaipan yli mittaus" NAME="D-IVK68-PDIE20-D1603_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230002" Value="-50"/>
+      <PI Name="EngTopOfScale" Unit="0x230002" Value="50"/>
+      <PI Name="InputChannelNumber" Value="15"/>
+      <PI Name="LogArray" Unit="0x230002"/>
+      <PI Name="Offset" Unit="0x230002" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x230002"/>
+    </OI>
+    <OI DESCR="Paine-ero vaipan yli mittaus" NAME="E-IVK65-PDIE20-E1600_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230002" Value="-50"/>
+      <PI Name="EngTopOfScale" Unit="0x230002" Value="50"/>
+      <PI Name="InputChannelNumber" Value="16"/>
+      <PI Name="LogArray" Unit="0x230002"/>
+      <PI Name="NOTE2" Value="Tuplapiste oikea vak 13 #6.5.2025 jiskoskela"/>
+      <PI Name="Offset" Unit="0x230002" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x230002"/>
+    </OI>
+  </OI>
+  <OI NAME="09_UI-16_2" TYPE="io.UI16">
+    <PI Name="ModuleID" Value="9"/>
+    <OI DESCR="Paine-ero vaipan yli mittaus" NAME="D-IVK69-PDIE20-D1700_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230002" Value="-50"/>
+      <PI Name="EngTopOfScale" Unit="0x230002" Value="50"/>
+      <PI Name="InputChannelNumber" Value="1"/>
+      <PI Name="LogArray" Unit="0x230002"/>
+      <PI Name="Offset" Unit="0x230002" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x230002"/>
+    </OI>
+    <OI DESCR="Paine-ero vaipan yli mittaus" NAME="E-IVK67-PDIE20-E1700_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230002" Value="-50"/>
+      <PI Name="EngTopOfScale" Unit="0x230002" Value="50"/>
+      <PI Name="InputChannelNumber" Value="2"/>
+      <PI Name="LogArray" Unit="0x230002"/>
+      <PI Name="Offset" Unit="0x230002" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x230002"/>
+    </OI>
+    <OI DESCR="Paine-ero vaipan yli mittaus" NAME="E-IVK71-PDIE20-C2799_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230002" Value="-50"/>
+      <PI Name="EngTopOfScale" Unit="0x230002" Value="50"/>
+      <PI Name="InputChannelNumber" Value="3"/>
+      <PI Name="LogArray" Unit="0x230002"/>
+      <PI Name="Offset" Unit="0x230002" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x230002"/>
+    </OI>
+    <OI DESCR="Lämpötila meno mittaus" NAME="C-J70-TE50_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="4"/>
+      <PI Name="LowerReliabilityLevel" Value="-45"/>
+      <PI Name="NOTE2" Value="jää turhaksi #4.4.2025 jiskoskela"/>
+      <PI Name="ThermistorType" Value="3"/>
+      <PI Name="UpperReliabilityLevel" Value="145"/>
+    </OI>
+    <OI DESCR="Lämpötila paluu mittaus" NAME="C-J70-TE51_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="5"/>
+      <PI Name="LowerReliabilityLevel" Value="-45"/>
+      <PI Name="NOTE2" Value="ei säätärissä #4.4.2025 jiskoskela"/>
+      <PI Name="ThermistorType" Value="3"/>
+      <PI Name="UpperReliabilityLevel" Value="145"/>
+    </OI>
+    <OI DESCR="Jäähdytysverkosto meno mittaus" NAME="C-J70-TE60_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="6"/>
+      <PI Name="LowerReliabilityLevel" Value="-45"/>
+      <PI Name="ThermistorType" Value="3"/>
+      <PI Name="UpperReliabilityLevel" Value="145"/>
+    </OI>
+    <OI DESCR="Jäähdytysverkosto paluu mittaus" NAME="C-J70-TE61_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="7"/>
+      <PI Name="LowerReliabilityLevel" Value="-45"/>
+      <PI Name="ThermistorType" Value="3"/>
+      <PI Name="UpperReliabilityLevel" Value="145"/>
+    </OI>
+    <OI DESCR="Verkoston paine mittaus" NAME="C-J70-PE51_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecBottomOfScale" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230006" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x230006" Value="6"/>
+      <PI Name="InputChannelNumber" Value="8"/>
+      <PI Name="LogArray" Unit="0x230006"/>
+      <PI Name="NOTE2" Value="jää turhaksi #4.4.2025 jiskoskela"/>
+      <PI Name="Offset" Unit="0x230006" Value="0"/>
+      <PI Name="Resolution" Value="0.00600000005"/>
+      <PI Name="Value" Unit="0x230006"/>
+    </OI>
+    <OI DESCR="Verkoston paine-ero mittaus" NAME="C-J70-PDE50_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecBottomOfScale" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x3230002" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x3230002" Value="10"/>
+      <PI Name="InputChannelNumber" Value="9"/>
+      <PI Name="LogArray" Unit="0x3230002"/>
+      <PI Name="NOTE2" Value="jää turhaksi #4.4.2025 jiskoskela"/>
+      <PI Name="Offset" Unit="0x3230002" Value="0"/>
+      <PI Name="Resolution" Value="0.00999999978"/>
+      <PI Name="Value" Unit="0x3230002"/>
+    </OI>
+    <OI DESCR="Lämpötila meno mittaus" NAME="C-J70-TE50.1_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="10"/>
+      <PI Name="LowerReliabilityLevel" Value="-45"/>
+      <PI Name="NOTE2" Value="C-J70 TE50_1 #4.4.2025 jiskoskela"/>
+      <PI Name="ThermistorType" Value="3"/>
+      <PI Name="UpperReliabilityLevel" Value="145"/>
+    </OI>
+    <OI DESCR="Lämpötila paluu mittaus" NAME="C-J71-TE51_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="11"/>
+      <PI Name="LowerReliabilityLevel" Value="-45"/>
+      <PI Name="NOTE2" Value="ei säätärissä #4.4.2025 jiskoskela"/>
+      <PI Name="ThermistorType" Value="3"/>
+      <PI Name="UpperReliabilityLevel" Value="145"/>
+    </OI>
+    <OI DESCR="Jäähdytysverkosto meno mittaus" NAME="C-J71-TE60_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="12"/>
+      <PI Name="LowerReliabilityLevel" Value="-45"/>
+      <PI Name="NOTE2" Value="ei säätärissä #4.4.2025 jiskoskela"/>
+      <PI Name="ThermistorType" Value="3"/>
+      <PI Name="UpperReliabilityLevel" Value="145"/>
+    </OI>
+    <OI DESCR="Jäähdytysverkosto paluu mittaus" NAME="C-J71-TE61_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="13"/>
+      <PI Name="LowerReliabilityLevel" Value="-45"/>
+      <PI Name="NOTE2" Value="ei säätärissä #4.4.2025 jiskoskela"/>
+      <PI Name="ThermistorType" Value="3"/>
+      <PI Name="UpperReliabilityLevel" Value="10"/>
+    </OI>
+    <OI DESCR="Verkoston paine mittaus" NAME="C-J70-PE52_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecBottomOfScale" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230006" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x230006" Value="6"/>
+      <PI Name="InputChannelNumber" Value="14"/>
+      <PI Name="LogArray" Unit="0x230006"/>
+      <PI Name="NOTE2" Value="C-J50 PE-52 #4.4.2025 jiskoskela"/>
+      <PI Name="Offset" Unit="0x230006" Value="0"/>
+      <PI Name="Resolution" Value="0.00600000005"/>
+      <PI Name="Value" Unit="0x230006"/>
+    </OI>
+    <OI DESCR="Verkoston paine-ero mittaus" NAME="C-J70-PDIE50.1_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecBottomOfScale" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x3230002" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x3230002" Value="600"/>
+      <PI Name="InputChannelNumber" Value="15"/>
+      <PI Name="LogArray" Unit="0x3230002"/>
+      <PI Name="NOTE2" Value="C-J70 PDE50_1 #4.4.2025 jiskoskela"/>
+      <PI Name="Offset" Unit="0x3230002" Value="0"/>
+      <PI Name="Resolution" Value="0.599999964"/>
+      <PI Name="Value" Unit="0x3230002" Value="-520"/>
+    </OI>
+    <OI NAME="IVK66-PDIE20-E1600_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230002" Value="-50"/>
+      <PI Name="EngTopOfScale" Unit="0x230002" Value="50"/>
+      <PI Name="InputChannelNumber" Value="16"/>
+      <PI Name="LogArray" Unit="0x230002"/>
+      <PI Name="Offset" Unit="0x230002" Value="0"/>
+      <PI Name="Value" Unit="0x230002"/>
+    </OI>
+  </OI>
+  <OI NAME="10_UI-16" TYPE="io.UI16">
+    <PI Name="ModuleID" Value="10"/>
+    <OI DESCR="Puhallin indikointi hidas" NAME="E-IVK74-TF-PF_Hidas_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="12"/>
+      <PI Name="Invert" Value="0"/>
+      <PI Name="NOTE1" Value="PF_T"/>
+      <PI Name="NOTE2" Value="Yhteinen indikointi koska nopeus1 ei käytössä #11.3.2025 Huolto"/>
+    </OI>
+    <OI DESCR="Puhallin indikointi nopea" NAME="E-IVK74-TF-PF_Nopea_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="13"/>
+      <PI Name="NOTE1" Value="PF_T"/>
+      <PI Name="NOTE2" Value="Ei tule #30.3.2025 jissumma"/>
+    </OI>
+    <OI DESCR="E-IVK74-Yhteisvikahälytys" NAME="E-IVK74-Yhteisvika_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="14"/>
+      <PI Name="NOTE1" Value="_H"/>
+      <PI Name="NOTE2" Value="Testattu jomppaamalla #11.3.2025 Huolto"/>
+    </OI>
+    <OI DESCR="C2650 serverihuone, kuumakäytävä" NAME="C-T810-TE21-C2650_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x280001" Value="-50"/>
+      <PI Name="EngTopOfScale" Unit="0x280001" Value="50"/>
+      <PI Name="InputChannelNumber" Value="2"/>
+      <PI Name="LogArray" Unit="0x280001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="Offset" Unit="0x280001" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x280001"/>
+    </OI>
+    <OI DESCR="C2650 serverihuone, kuumakäytävä" NAME="C-T810-TE24-C2650_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x280001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x280001" Value="50"/>
+      <PI Name="InputChannelNumber" Value="4"/>
+      <PI Name="LogArray" Unit="0x280001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="Offset" Unit="0x280001" Value="0"/>
+      <PI Name="Resolution" Value="0.049999997"/>
+      <PI Name="Value" Unit="0x280001"/>
+    </OI>
+    <OI DESCR="C2650 serverihuone, kylmäkäytävä" NAME="C-T810-TE26-C2650_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x280001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x280001" Value="50"/>
+      <PI Name="InputChannelNumber" Value="6"/>
+      <PI Name="LogArray" Unit="0x280001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="Offset" Unit="0x280001" Value="0"/>
+      <PI Name="Resolution" Value="0.049999997"/>
+      <PI Name="Value" Unit="0x280001"/>
+    </OI>
+    <OI DESCR="C2650 serverihuone, kylmäkäytävä" NAME="C-T810-TE28-C2650_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x280001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x280001" Value="50"/>
+      <PI Name="InputChannelNumber" Value="8"/>
+      <PI Name="LogArray" Unit="0x280001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="Offset" Unit="0x280001" Value="0"/>
+      <PI Name="Resolution" Value="0.049999997"/>
+      <PI Name="Value" Unit="0x280001"/>
+    </OI>
+    <OI DESCR="C2650 serverihuone, kylmäkäytävä" NAME="C-T810-ME21-C2650_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x170001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x170001" Value="100"/>
+      <PI Name="InputChannelNumber" Value="1"/>
+      <PI Name="LogArray" Unit="0x170001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="Offset" Unit="0x170001" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x170001"/>
+    </OI>
+    <OI DESCR="C2650 serverihuone, kylmäkäytävä" NAME="C-T810-ME24-C2650_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x170001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x170001" Value="100"/>
+      <PI Name="InputChannelNumber" Value="3"/>
+      <PI Name="LogArray" Unit="0x170001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="Offset" Unit="0x170001" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x170001"/>
+    </OI>
+    <OI DESCR="C2650 serverihuone, kylmäkäytävä" NAME="C-T810-ME26-C2650_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x170001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x170001" Value="100"/>
+      <PI Name="InputChannelNumber" Value="5"/>
+      <PI Name="LogArray" Unit="0x170001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="Offset" Unit="0x170001" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x170001"/>
+    </OI>
+    <OI DESCR="C2650 serverihuone, kylmäkäytävä" NAME="C-T810-ME28-C2650_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x170001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x170001" Value="100"/>
+      <PI Name="InputChannelNumber" Value="7"/>
+      <PI Name="LogArray" Unit="0x170001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="Offset" Unit="0x170001" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x170001"/>
+    </OI>
+    <OI DESCR="Vesivuotoanturi" NAME="C-T810-LS02-C2650_M" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="9"/>
+      <PI Name="NOTE2" Value=""/>
+    </OI>
+    <OI DESCR="Tuloilman lämpötila" NAME="C-UI65-TE10-C2750_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="10"/>
+      <PI Name="ThermistorType" Value="1"/>
+    </OI>
+    <OI DESCR="Tuloilmasuodattimen paine-ero" NAME="C-UI65-PDIE10-C2750_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230002" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x230002" Value="500"/>
+      <PI Name="InputChannelNumber" Value="11"/>
+      <PI Name="LogArray" Unit="0x230002"/>
+      <PI Name="Offset" Unit="0x230002" Value="0"/>
+      <PI Name="Value" Unit="0x230002"/>
+    </OI>
+    <OI DESCR="paluulämpötila" NAME="C-ELP5001-LIV50-TE10-C2750_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="15"/>
+      <PI Name="ThermistorType" Value="1"/>
+    </OI>
+    <OI DESCR="Esilämmitysverkoston paine" NAME="C-LIV50-PE43-C2750_M" TYPE="io.point.VoltageInput">
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x230006" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x230006" Value="6"/>
+      <PI Name="InputChannelNumber" Value="16"/>
+      <PI Name="LogArray" Unit="0x230006"/>
+      <PI Name="Offset" Unit="0x230006" Value="0"/>
+      <PI Name="Value" Unit="0x230006"/>
+    </OI>
+  </OI>
+  <OI NAME="11_AO-V-8" TYPE="io.AOV8">
+    <PI Name="ModuleID" Value="11"/>
+    <OI DESCR="Tuloilmapuhallin säätöviesti" NAME="D-IVK69-SC10_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="OutputChannelNumber" Value="1"/>
+      <PI Name="RequestedValue" Unit="0x200001" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+    <OI DESCR="Poistoilmapuhallin säätöviesti" NAME="D-IVK69-SC30_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="OutputChannelNumber" Value="2"/>
+      <PI Name="RequestedValue" Unit="0x200001" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+    <OI DESCR="LTO:n säätöviesti" NAME="D-IVK69-SC02_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="OutputChannelNumber" Value="3"/>
+      <PI Name="RequestedValue" Unit="0x200001" Value="50"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+    <OI DESCR="Lämmityspatterin venttiili säätöviesti" NAME="D-IVK69-FV40_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="OutputChannelNumber" Value="4"/>
+      <PI Name="RequestedValue" Unit="0x200001" Value="100"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+    <OI DESCR="Jäähdytyspatterin venttiili säätöviesti" NAME="D-IVK69-FV50_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="OutputChannelNumber" Value="5"/>
+      <PI Name="RequestedValue" Unit="0x200001" Value="100"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+    <OI DESCR="Jälkilämmityspatterin venttiili säätöviesti" NAME="D-IVK69-FV41_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="OutputChannelNumber" Value="6"/>
+      <PI Name="RequestedValue" Unit="0x200001"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+    <OI DESCR="Höyrykostuttimen säätöviesti" NAME="D-IVK69-KO07_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="NOTE2" Value="mittarilla #28.3.2025 jiskoskela"/>
+      <PI Name="OutputChannelNumber" Value="7"/>
+      <PI Name="RequestedValue" Unit="0x200001" Value="0"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+    <OI DESCR="Pumppu säätöviesti" NAME="C-J70-PU50-C2750_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="OutputChannelNumber" Value="8"/>
+      <PI Name="RequestedValue" Unit="0x200001" Value="66"/>
+      <PI Name="Resolution" Value="0.099999994"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+  </OI>
+  <OI NAME="12_AO-V-8" TYPE="io.AOV8">
+    <PI Name="ModuleID" Value="12"/>
+    <OI DESCR="Pumpun Säätöviesti" NAME="C-VJK51-PU51-C2750_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecBottomOfScale" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="3"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="OutputChannelNumber" Value="1"/>
+      <PI Name="RequestedValue" Unit="0x200001" Value="80"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+    <OI DESCR="Poistoilmapuhallin säätöviesti" NAME="C-P62-PF01_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="OutputChannelNumber" Value="2"/>
+      <PI Name="RequestedValue" Unit="0x200001" Value="0"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+    <OI DESCR="Etulämmityspatterin kolmitieventtiili - säätöviesti" NAME="C-ELP5001-LIV50-FV5209-C2750_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="OutputChannelNumber" Value="3"/>
+      <PI Name="RequestedValue" Unit="0x200001"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+    <OI DESCR="IV verkoston venttiili - säätöviestsi" NAME="C-LIV50-FV5210-C2750_Y" TYPE="io.point.VoltageOutput">
+      <PI Name="DefaultOutput" Unit="0x200001" Value="0"/>
+      <PI Name="ElecTopOfScale" Value="10"/>
+      <PI Name="EngBottomOfScale" Unit="0x200001" Value="0"/>
+      <PI Name="EngTopOfScale" Unit="0x200001" Value="100"/>
+      <PI Name="LogArray" Unit="0x200001"/>
+      <PI Name="OutputChannelNumber" Value="4"/>
+      <PI Name="RequestedValue" Unit="0x200001"/>
+      <PI Name="Value" Unit="0x200001"/>
+    </OI>
+  </OI>
+  <OI NAME="13_DO-FA-12" TYPE="io.DOFA12">
+    <PI Name="ModuleID" Value="13"/>
+    <OI DESCR="Tuloilmapelti ohjaus" NAME="D-IVK69-FG01_K" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="1"/>
+      <PI Name="RequestedValue" Value="0"/>
+    </OI>
+    <OI DESCR="Poistoilmapelti ohjaus" NAME="D-IVK69-FG30_K" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="2"/>
+      <PI Name="RequestedValue" Value="0"/>
+    </OI>
+    <OI DESCR="Pakkopysäytys " NAME="D-IVK69-SC10_IVHS_K" TYPE="io.point.DigitalOutput">
+      <PI Name="Invert" Value="1"/>
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="OutputChannelNumber" Value="3"/>
+      <PI Name="RequestedValue" Value="0"/>
+    </OI>
+    <OI DESCR="Pakkopysäytys " NAME="D-IVK69-SC30_IVHS_K" TYPE="io.point.DigitalOutput">
+      <PI Name="Invert" Value="1"/>
+      <PI Name="OutputChannelNumber" Value="4"/>
+      <PI Name="RequestedValue" Value="0"/>
+    </OI>
+    <OI DESCR="Tuloilmapuhallin ohjaus" NAME="D-IVK69-SC10_K" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="5"/>
+    </OI>
+    <OI DESCR="Poistoilmapuhallin ohjaus" NAME="D-IVK69-SC30_K" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="6"/>
+    </OI>
+    <OI DESCR="Kostutin käyntilupa" NAME="D-IVK69-KO07_K" TYPE="io.point.DigitalOutput">
+      <PI Name="NOTE2" Value="mittarilla #28.3.2025 jiskoskela"/>
+      <PI Name="OutputChannelNumber" Value="7"/>
+      <PI Name="RequestedValue" Value="0"/>
+    </OI>
+    <OI DESCR="Vedenjäähdytyskone käyntilupa" NAME="C-VJK51_K" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="8"/>
+      <PI Name="RequestedValue" Value="1"/>
+    </OI>
+    <OI DESCR="Pumppu ohjaus" NAME="C-J70-PU50-C2750_K" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="9"/>
+      <PI Name="RequestedValue" Value="1"/>
+    </OI>
+    <OI DESCR="Vedenjäähdytyskone käyntilupa" NAME="C-VJK52_K" TYPE="io.point.DigitalOutput">
+      <PI Name="NOTE2" Value="vak 13 #11.4.2025 jiskoskela"/>
+      <PI Name="OutputChannelNumber" Value="10"/>
+    </OI>
+    <OI DESCR="Palopellin ohjaus" NAME="D-T69-PPFG5073-C2750_K" TYPE="io.point.DigitalOutput">
+      <PI Name="NOTE1" Value="PP_Ohjaus_K"/>
+      <PI Name="OutputChannelNumber" Value="12"/>
+      <PI Name="RequestedValue" Value="1"/>
+    </OI>
+    <OI DESCR="Pumpun käyntilupa" NAME="C-VJK51-PU51-C2750_K" TYPE="io.point.DigitalOutput">
+      <PI Name="NOTE2" Value="tyhjä piste #4.4.2025 jiskoskela"/>
+      <PI Name="OutputChannelNumber" Value="11"/>
+      <PI Name="RequestedValue" Value="1"/>
+    </OI>
+  </OI>
+  <OI NAME="14_DO-FA-12" TYPE="io.DOFA12">
+    <PI Name="ModuleID" Value="14"/>
+    <OI DESCR="Pohjoispäädyn valoimainokset ohjaus" NAME="D-T810-UV01_K" TYPE="io.point.DigitalOutput">
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="OutputChannelNumber" Value="1"/>
+      <PI Name="RequestedValue" Value="1"/>
+    </OI>
+    <OI DESCR="Kattokaivojen sulatukset ohjaus" NAME="C-T810-SVK06_K" TYPE="io.point.DigitalOutput">
+      <PI Name="NOTE2" Value=""/>
+      <PI Name="OutputChannelNumber" Value="2"/>
+    </OI>
+    <OI DESCR="Puhallin ohjaus hidas" NAME="E-IVK74-TF-PF_Hidas_K" TYPE="io.point.DigitalOutput">
+      <PI Name="NOTE1" Value="PF_K"/>
+      <PI Name="OutputChannelNumber" Value="8"/>
+      <PI Name="RequestedValue" Value="0"/>
+    </OI>
+    <OI DESCR="Puhallin ohjaus nopea" NAME="E-IVK74-TF-PF_Nopea_K" TYPE="io.point.DigitalOutput">
+      <PI Name="NOTE1" Value="PF_K"/>
+      <PI Name="OutputChannelNumber" Value="9"/>
+      <PI Name="RequestedValue" Value="0"/>
+    </OI>
+    <OI DESCR="Palopellin ohjaus" NAME="D-T71-PPFG5078-C2751_K" TYPE="io.point.DigitalOutput">
+      <PI Name="NOTE1" Value="PP_Ohjaus_K"/>
+      <PI Name="OutputChannelNumber" Value="7"/>
+      <PI Name="RequestedValue" Value="0"/>
+    </OI>
+    <OI DESCR="Merkkivalo" NAME="C-ELV0025-M0001-C2750" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="11"/>
+      <PI Name="RequestedValue">
+        <Reference DeltaFilter="0" Object="../../07_DI-16_2/C-ELV0025-PS0001-C2750_H" Property="Value" Retransmit="0" TransferRate="10"/>
+      </PI>
+    </OI>
+    <OI DESCR="Merkkivalo" NAME="C-ELV0026-M0001-C2750" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="12"/>
+      <PI Name="RequestedValue">
+        <Reference DeltaFilter="0" Object="../../07_DI-16_2/C-ELV0026-PS0001-C2750_H" Property="Value" Retransmit="0" TransferRate="10"/>
+      </PI>
+    </OI>
+    <OI DESCR="Etulämmityspatterin pumppu - käyntilupa" NAME="C-LIV50-PU5038-C2750_K" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="3"/>
+    </OI>
+    <OI DESCR="Tuloilma peltimoottori" NAME="C-UI65-FG5145-C2750_K" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="4"/>
+    </OI>
+  </OI>
+  <OI NAME="15_DI-16" TYPE="io.DI16">
+    <PI Name="ModuleID" Value="15"/>
+    <OI DESCR="Palopellin kiinni tila" NAME="D-P69-PPFG5072-C2750-Kiinni_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="2"/>
+      <PI Name="NOTE1" Value="PP_Kiinni_T"/>
+    </OI>
+    <OI DESCR="Palopellin auki tila" NAME="D-P69-PPFG5072-C2750-Auki_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="1"/>
+      <PI Name="NOTE1" Value="PP_Auki_T"/>
+    </OI>
+    <OI DESCR="Palopellin kiinni tila" NAME="D-P71-PPFG5079-C2751-Kiinni_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="8"/>
+      <PI Name="NOTE1" Value="PP_Kiinni_T"/>
+    </OI>
+    <OI DESCR="Palopellin auki tila" NAME="D-P71-PPFG5079-C2751-Auki_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="7"/>
+      <PI Name="NOTE1" Value="PP_Auki_T"/>
+    </OI>
+    <OI DESCR="Palopellin kiinni tila" NAME="D-T69-PPFG5073-C2750-Kiinni_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="4"/>
+      <PI Name="NOTE1" Value="PP_Kiinni_T"/>
+    </OI>
+    <OI DESCR="Palopellin auki tila" NAME="D-T69-PPFG5073-C2750-Auki_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="3"/>
+      <PI Name="NOTE1" Value="PP_Auki_T"/>
+    </OI>
+    <OI DESCR="Palopellin kiinni tila" NAME="D-T71-PPFG5078-C2751-Kiinni_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="6"/>
+      <PI Name="NOTE1" Value="PP_Kiinni_T"/>
+    </OI>
+    <OI DESCR="Palopellin auki tila" NAME="D-T71-PPFG5078-C2751-Auki_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="5"/>
+      <PI Name="NOTE1" Value="PP_Auki_T"/>
+    </OI>
+    <OI DESCR="Poistoilmapuhallin indikointi" NAME="C-P62-PF01_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="9"/>
+    </OI>
+    <OI NAME="P62_H" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="10"/>
+      <PI Name="NOTE2" Value="ei tule #21.5.2025 jissumma"/>
+    </OI>
+    <OI NAME="PLI52_T" TYPE="io.point.DigitalInput">
+      <PI Name="InputChannelNumber" Value="11"/>
+      <PI Name="NOTE2" Value="ei tule? #22.5.2025 jissumma"/>
+    </OI>
+  </OI>
+  <OI NAME="16_DO-FA-12" TYPE="io.DOFA12">
+    <PI Name="ModuleID" Value="16"/>
+    <OI DESCR="Poistoilmapuhallin ohjaus" NAME="C-P62-PF01_K" TYPE="io.point.DigitalOutput">
+      <PI Name="OutputChannelNumber" Value="1"/>
+      <PI Name="RequestedValue" Value="0"/>
+    </OI>
+    <OI NAME="PLI52_K" TYPE="io.point.DigitalOutput">
+      <PI Name="NOTE2" Value="ei tule? #22.5.2025 jissumma"/>
+      <PI Name="OutputChannelNumber" Value="2"/>
+    </OI>
+  </OI>
+  <OI NAME="17_UI-16" TYPE="io.UI16">
+    <PI Name="ModuleID" Value="17"/>
+    <OI DESCR="IV-verkoston paluulämpötila - mittaus" NAME="C-LIV50-TE44-C2750_M" TYPE="io.point.TemperatureInput">
+      <PI Name="InputChannelNumber" Value="1"/>
+      <PI Name="ThermistorType" Value="1"/>
+    </OI>
+  </OI>
+</ExportedObjects>
+
+</ObjectSet>

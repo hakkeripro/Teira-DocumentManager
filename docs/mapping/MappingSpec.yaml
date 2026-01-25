@@ -1,0 +1,271 @@
+# Teira DocumentManager MappingSpec.yaml (authoritative for Sprint 2)
+# Purpose:
+# - Define how incoming XML/XLSX is mapped into TEIRA "canonical" document data payloads
+# - Keep mapping declarative: Sprint 2 implements engine to read this spec, validate, dry-run preview, and commit with audit
+#
+# Notes:
+# - Sprint 1 data model has Documents + Revisions only. Sprint 2 may initially store imported "canonical rows" as JSON
+#   (e.g., ImportRun payload / Document.settings) and later normalize into dedicated tables.
+# - v1.2 docs introduce Centers/SubCenters. This spec assumes imports/exports are CENTER-scoped.
+#   If center is not present in file, Import UI MUST require selecting a target center.
+#
+version: 1
+meta:
+  name: "TEIRA Mapping Spec"
+  updated_at: "2026-01-21"
+  status: "baseline"
+  description: >
+    Baseline mapping spec for Sprint 2. Extend per real vendor/XML formats and customer XLSX templates.
+
+# Built-in transforms expected from mapping engine
+# (Sprint 2 should implement at least these; others can be ignored with a clear warning)
+transforms:
+  - trim
+  - to_upper
+  - to_lower
+  - normalize_ws
+  - parse_int
+  - parse_float
+  - replace: { from: ",", to: "." }   # for decimal comma
+  - default: { value: "" }
+
+# Global import context
+context:
+  # How to determine target project/center for an import run
+  project:
+    # Import UI should always know the project from route (/app/projects/:id)
+    source: "ui"
+  center:
+    # If file doesn't contain a center code, UI must require choosing it.
+    source: "ui_or_file"
+    file_fields:
+      # Optional: file may contain center code in header
+      xlsx:
+        sheet: "META"
+        key_column: "Key"
+        value_column: "Value"
+        mapping:
+          center_code: "CENTER_CODE"
+      xml:
+        # JSON-like path after XML->JSON parsing
+        path: "Meta.CenterCode"
+
+# Targets define the canonical payload for each TEIRA document type.
+# Each target yields a canonical object:
+#   {
+#     docType: <DocumentType>,
+#     header: {...},
+#     rows: [ {...} ],
+#     identity: { key: value }
+#   }
+targets:
+  - docType: "DEVICE_LIST"            # Prisma enum: DEVICE_LIST
+    identity_keys: ["device_id"]
+    canonical:
+      header_fields:
+        - project_code
+        - center_code
+      row_fields:
+        # Minimal baseline fields. Extend freely.
+        - device_id        # required
+        - name
+        - device_type
+        - manufacturer
+        - model
+        - location
+        - cabinet
+        - comment
+    sources:
+      xlsx:
+        # Template: sheet "DEVICE_LIST" with headers in row 1
+        sheet: "DEVICE_LIST"
+        header_row: 1
+        row_start: 2
+        columns:
+          device_id:      { header: "Device ID", required: true, transforms: [trim] }
+          name:           { header: "Name", transforms: [trim] }
+          device_type:    { header: "Type", transforms: [trim] }
+          manufacturer:   { header: "Manufacturer", transforms: [trim] }
+          model:          { header: "Model", transforms: [trim] }
+          location:       { header: "Location", transforms: [trim] }
+          cabinet:        { header: "Cabinet", transforms: [trim] }
+          comment:        { header: "Comment", transforms: [trim] }
+      xml:
+        # Baseline structure (MUST be adapted to real XML format).
+        # Engine should parse XML -> JSON then use dot paths.
+        root_array_path: "DeviceList.Devices.Device"
+        fields:
+          device_id:      { path: "Id", required: true, transforms: [trim] }
+          name:           { path: "Name", transforms: [trim] }
+          device_type:    { path: "Type", transforms: [trim] }
+          manufacturer:   { path: "Manufacturer", transforms: [trim] }
+          model:          { path: "Model", transforms: [trim] }
+          location:       { path: "Location", transforms: [trim] }
+          cabinet:        { path: "Cabinet", transforms: [trim] }
+          comment:        { path: "Comment", transforms: [trim] }
+
+  - docType: "PULL_LIST"              # Prisma enum: PULL_LIST
+    identity_keys: ["cable_id"]
+    canonical:
+      header_fields:
+        - project_code
+        - center_code
+      row_fields:
+        - cable_id        # required
+        - from
+        - to
+        - length_m
+        - cable_type
+        - route
+        - comment
+    sources:
+      xlsx:
+        sheet: "PULL_LIST"
+        header_row: 1
+        row_start: 2
+        columns:
+          cable_id:    { header: "Cable ID", required: true, transforms: [trim] }
+          from:        { header: "From", transforms: [trim] }
+          to:          { header: "To", transforms: [trim] }
+          length_m:    { header: "Length (m)", transforms: [trim, replace, parse_float] }
+          cable_type:  { header: "Cable Type", transforms: [trim] }
+          route:       { header: "Route", transforms: [trim] }
+          comment:     { header: "Comment", transforms: [trim] }
+      xml:
+        root_array_path: "PullList.Cables.Cable"
+        fields:
+          cable_id:    { path: "Id", required: true, transforms: [trim] }
+          from:        { path: "From", transforms: [trim] }
+          to:          { path: "To", transforms: [trim] }
+          length_m:    { path: "LengthM", transforms: [trim, replace, parse_float] }
+          cable_type:  { path: "Type", transforms: [trim] }
+          route:       { path: "Route", transforms: [trim] }
+          comment:     { path: "Comment", transforms: [trim] }
+
+  - docType: "NAMEPLATE_LIST"         # Prisma enum: NAMEPLATE_LIST
+    identity_keys: ["tag"]
+    canonical:
+      header_fields:
+        - project_code
+        - center_code
+      row_fields:
+        - tag            # required
+        - description
+    sources:
+      xlsx:
+        sheet: "NAMEPLATE_LIST"
+        header_row: 1
+        row_start: 2
+        columns:
+          tag:          { header: "Tag", required: true, transforms: [trim] }
+          description:  { header: "Description", transforms: [trim] }
+      xml:
+        root_array_path: "NameplateList.Nameplates.Nameplate"
+        fields:
+          tag:          { path: "Tag", required: true, transforms: [trim] }
+          description:  { path: "Description", transforms: [trim] }
+
+  - docType: "TEST_LIST"              # Prisma enum: TEST_LIST
+    identity_keys: ["test_id"]
+    canonical:
+      header_fields:
+        - project_code
+        - center_code
+      row_fields:
+        - test_id         # required
+        - description
+        - reference
+        - expected
+        - unit
+        - comment
+    sources:
+      xlsx:
+        sheet: "TEST_LIST"
+        header_row: 1
+        row_start: 2
+        columns:
+          test_id:      { header: "Test ID", required: true, transforms: [trim] }
+          description:  { header: "Description", transforms: [trim] }
+          reference:    { header: "Reference", transforms: [trim] }
+          expected:     { header: "Expected", transforms: [trim] }
+          unit:         { header: "Unit", transforms: [trim] }
+          comment:      { header: "Comment", transforms: [trim] }
+      xml:
+        root_array_path: "TestList.Tests.Test"
+        fields:
+          test_id:      { path: "Id", required: true, transforms: [trim] }
+          description:  { path: "Description", transforms: [trim] }
+          reference:    { path: "Reference", transforms: [trim] }
+          expected:     { path: "Expected", transforms: [trim] }
+          unit:         { path: "Unit", transforms: [trim] }
+          comment:      { path: "Comment", transforms: [trim] }
+
+  - docType: "WIRING_DIAGRAMS"         # Prisma enum: WIRING_DIAGRAMS
+    # For Sprint 2: Wiring diagrams are represented as IO-module exports (ObjectSet XML)
+    # where each module contains points. Canonical rows represent points with module context.
+    identity_keys: ["module_name", "point_name"]
+    canonical:
+      header_fields:
+        - project_code
+        - center_code
+      row_fields:
+        - module_name      # required
+        - module_xml_type
+        - module_descr
+        - module_id
+        - point_name       # required
+        - point_xml_type
+        - point_descr
+        - input_channel_number
+        - output_channel_number
+        - note2
+    sources:
+      xlsx:
+        sheet: "WIRING_DIAGRAMS"
+        header_row: 1
+        row_start: 2
+        columns:
+          module_name:           { header: "Module Name", required: true, transforms: [trim] }
+          module_xml_type:       { header: "Module Type", transforms: [trim] }
+          module_descr:          { header: "Module Description", transforms: [trim] }
+          module_id:             { header: "ModuleID", transforms: [trim] }
+          point_name:            { header: "Point Name", required: true, transforms: [trim] }
+          point_xml_type:        { header: "Point Type", transforms: [trim] }
+          point_descr:           { header: "Point Description", transforms: [trim] }
+          input_channel_number:  { header: "InputChannelNumber", transforms: [trim] }
+          output_channel_number: { header: "OutputChannelNumber", transforms: [trim] }
+          note2:                 { header: "NOTE2", transforms: [trim] }
+      xml:
+        format: "objectset"
+        module_array_path: "ExportedObjects.OI"   # ObjectSet -> ExportedObjects -> OI (module)
+        point_array_key: "OI"                     # module -> OI (point)
+        # Known types: warnings only. Unknown types do not fail the import.
+        known_module_types: ["io.DI16", "io.UI16", "io.DOFA12", "io.AOV8"]
+        known_point_types: ["io.point.DigitalInput", "io.point.DigitalOutput", "io.point.VoltageInput", "io.point.VoltageOutput", "io.point.TemperatureInput"]
+        module_fields:
+          module_name:     { attr: "NAME", required: true, transforms: [trim] }
+          module_xml_type: { attr: "TYPE", transforms: [trim] }
+          module_descr:    { attr: "DESCR", transforms: [trim] }
+          module_id:       { pi: "ModuleID", transforms: [trim] }
+        point_fields:
+          point_name:            { attr: "NAME", required: true, transforms: [trim] }
+          point_xml_type:        { attr: "TYPE", transforms: [trim] }
+          point_descr:           { attr: "DESCR", transforms: [trim] }
+          input_channel_number:  { pi: "InputChannelNumber", transforms: [trim] }
+          output_channel_number: { pi: "OutputChannelNumber", transforms: [trim] }
+          note2:                 { pi: "NOTE2", transforms: [trim] }
+        preserve_property_bag: true
+
+# Validation expectations for engine (Sprint 2)
+validation:
+  required_context:
+    - project
+  required_fields_behavior: "error"    # error | warn
+  unknown_columns_behavior: "warn"     # ignore | warn | error
+  max_rows_default: 50000              # safety guardrail
+
+# Commit strategy expectations (Sprint 2)
+commit:
+  mode: "upsert_by_identity"           # upsert_by_identity | append_only
+  dry_run_supported: true
+  audit_required: true

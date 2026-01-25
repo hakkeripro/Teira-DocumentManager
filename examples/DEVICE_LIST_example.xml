@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DeviceList>
+  <Devices>
+    <Device>
+      <Id>D-001</Id>
+      <Name>AHU-1</Name>
+      <Type>AHU</Type>
+      <Manufacturer>Siemens</Manufacturer>
+      <Model>ABC-100</Model>
+      <Location>Roof</Location>
+      <Cabinet>CB-01</Cabinet>
+      <Comment>Demo device</Comment>
+    </Device>
+    <Device>
+      <Id>D-002</Id>
+      <Name>Pump-1</Name>
+      <Type>PUMP</Type>
+      <Manufacturer>Grundfos</Manufacturer>
+      <Model>G-55</Model>
+      <Location>Basement</Location>
+      <Cabinet>CB-02</Cabinet>
+      <Comment></Comment>
+    </Device>
+  </Devices>
+</DeviceList>

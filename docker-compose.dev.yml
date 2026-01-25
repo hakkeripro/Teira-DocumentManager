@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: teira-postgres-dev
+    environment:
+      POSTGRES_USER: teira
+      POSTGRES_PASSWORD: teira
+      POSTGRES_DB: teira
+    ports:
+      - "55432:5432"
+    volumes:
+      - teira_pgdata:/var/lib/postgresql/data
+volumes:
+  teira_pgdata:

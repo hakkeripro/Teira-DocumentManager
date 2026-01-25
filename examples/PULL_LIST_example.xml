@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PullList>
+  <Cables>
+    <Cable>
+      <Id>C-100</Id>
+      <From>CB-01:1</From>
+      <To>CB-02:3</To>
+      <LengthM>25,5</LengthM>
+      <Type>NYM-J 3x1.5</Type>
+      <Route>Tray A</Route>
+      <Comment></Comment>
+    </Cable>
+    <Cable>
+      <Id>C-101</Id>
+      <From>CB-01:2</From>
+      <To>CB-03:7</To>
+      <LengthM>12.0</LengthM>
+      <Type>CAT6</Type>
+      <Route>Conduit B</Route>
+      <Comment>Decimal dot OK too</Comment>
+    </Cable>
+  </Cables>
+</PullList>

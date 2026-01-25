@@ -1,0 +1,250 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  DESIGNER
+  VIEWER
+}
+
+enum DocumentType {
+  WIRING_DIAGRAMS
+  TEST_LIST
+  DEVICE_LIST
+  PULL_LIST
+  NAMEPLATE_LIST
+}
+
+enum AssetType {
+  PDF
+  JSON_SNAPSHOT
+  XML_EXPORT
+  XLSX_EXPORT
+}
+
+enum ImportSource {
+  XML
+  XLSX
+}
+
+enum ImportStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum ImportIssueSeverity {
+  WARN
+  ERROR
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users                  AppUser[]
+  areas                  Area[]
+  projects               Project[]
+  subCenters             SubCenter[]
+  documents              Document[]
+  documentRevisions      DocumentRevision[]
+  documentRevisionAssets DocumentRevisionAsset[]
+  importJobs             ImportJob[]
+  importIssues           ImportIssue[]
+
+  @@map("company")
+}
+
+model AppUser {
+  id        String  @id @default(cuid())
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  // Supabase Auth user id
+  authUserId String  @unique @map("auth_user_id")
+  email      String
+  name       String?
+  role       Role    @default(VIEWER)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  revisionsCreated  DocumentRevision[] @relation("revisions_created")
+  importJobsCreated ImportJob[]        @relation("import_jobs_created")
+
+  @@index([companyId])
+  @@map("app_user")
+}
+
+model Area {
+  id        String  @id @default(cuid())
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  projects Project[]
+
+  @@index([companyId])
+  @@map("area")
+}
+
+model Project {
+  id        String  @id @default(cuid())
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  areaId String @map("area_id")
+  area   Area   @relation(fields: [areaId], references: [id])
+
+  name String
+  code String
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  subCenters SubCenter[]
+  documents  Document[]
+  importJobs ImportJob[]
+
+  @@unique([companyId, code])
+  @@index([companyId, areaId])
+  @@map("project")
+}
+
+model SubCenter {
+  id        String  @id @default(cuid())
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id])
+
+  name      String
+  code      String?  @map("code")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  documents  Document[]
+  importJobs ImportJob[]
+
+  @@unique([projectId, code])
+  @@index([companyId, projectId])
+  @@map("sub_center")
+}
+
+model Document {
+  id        String  @id @default(cuid())
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id])
+
+  subCenterId String    @map("sub_center_id")
+  subCenter   SubCenter @relation(fields: [subCenterId], references: [id])
+
+  type     DocumentType
+  title    String?
+  settings Json?        @map("settings_jsonb")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  revisions DocumentRevision[]
+
+  @@unique([subCenterId, type])
+  @@index([companyId, projectId, subCenterId])
+  @@map("document")
+}
+
+model DocumentRevision {
+  id        String  @id @default(cuid())
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  documentId String   @map("document_id")
+  document   Document @relation(fields: [documentId], references: [id])
+
+  revIndex   Int     @map("rev_index")
+  revLetter  String  @map("rev_letter")
+  changeNote String? @map("change_note")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  createdByUserId String?  @map("created_by_user_id")
+  createdBy       AppUser? @relation("revisions_created", fields: [createdByUserId], references: [id])
+
+  assets DocumentRevisionAsset[]
+
+  @@unique([documentId, revIndex])
+  @@index([companyId, documentId])
+  @@map("document_revision")
+}
+
+model DocumentRevisionAsset {
+  id        String  @id @default(cuid())
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  documentRevisionId String           @map("document_revision_id")
+  documentRevision   DocumentRevision @relation(fields: [documentRevisionId], references: [id])
+
+  assetType       AssetType @map("asset_type")
+  storageProvider String    @map("storage_provider")
+  storageKey      String    @map("storage_key")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([companyId, documentRevisionId])
+  @@map("document_revision_asset")
+}
+
+model ImportJob {
+  id        String  @id @default(cuid())
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id])
+
+  subCenterId String    @map("sub_center_id")
+  subCenter   SubCenter @relation(fields: [subCenterId], references: [id])
+
+  source   ImportSource
+  filename String
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  createdByUserId String?  @map("created_by_user_id")
+  createdBy       AppUser? @relation("import_jobs_created", fields: [createdByUserId], references: [id])
+
+  status  ImportStatus @default(PENDING)
+  summary Json?        @map("summary_jsonb")
+
+  issues ImportIssue[]
+
+  @@index([companyId, projectId, subCenterId, createdAt])
+  @@map("import_job")
+}
+
+model ImportIssue {
+  id        String  @id @default(cuid())
+  companyId String  @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  importJobId String    @map("import_job_id")
+  importJob   ImportJob @relation(fields: [importJobId], references: [id])
+
+  severity ImportIssueSeverity
+  message  String
+  path     String?
+
+  @@index([companyId, importJobId])
+  @@map("import_issue")
+}

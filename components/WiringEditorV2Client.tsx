@@ -119,7 +119,7 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
-/** Inline styles for print-grid table (white table, thin borders per golden ref) */
+/** Inline styles for print-grid table (white table, thin borders, black text per golden ref) */
 const printGridStyles = {
   table: {
     borderCollapse: 'collapse' as const,
@@ -128,6 +128,7 @@ const printGridStyles = {
     background: '#fff',
     fontSize: 11,
     fontFamily: 'Arial, sans-serif',
+    color: '#000', // Black text
   },
   th: {
     border: '1px solid #000',
@@ -137,6 +138,7 @@ const printGridStyles = {
     textAlign: 'center' as const,
     verticalAlign: 'bottom' as const,
     fontSize: 10,
+    color: '#000', // Black header text
   },
   thGroup: {
     border: '1px solid #000',
@@ -145,12 +147,14 @@ const printGridStyles = {
     fontWeight: 600,
     textAlign: 'center' as const,
     fontSize: 10,
+    color: '#000', // Black header text
   },
   td: {
     border: '1px solid #000',
     padding: '2px 4px',
     verticalAlign: 'top' as const,
     background: '#fff',
+    color: '#000',
   },
   input: {
     width: '100%',
@@ -159,8 +163,36 @@ const printGridStyles = {
     fontSize: 10,
     padding: '2px',
     outline: 'none',
+    color: '#000',
   },
 };
+
+/** 
+ * Group terminals into IO channel blocks for row grouping.
+ * Each IO channel (DI1, DI2, etc.) has connector_lines that should be rendered as multiple rows.
+ * Per golden ref: Liitin, Kaapeli1 Pari, Välikytkentäpaikka, Kaapeli2 Pari, Minne johdetaan Liitin
+ * are per-connector-line. Others use rowSpan.
+ */
+type TerminalGroup = {
+  /** Primary terminal code (e.g., DI1) */
+  terminalCode: string;
+  /** Connector lines to display in Liitin column */
+  connectorLines: string[];
+};
+
+function groupTerminalsForPrintGrid(
+  terminals: { terminal_code: string; print_label: string; order: number; group?: string; connector_lines?: string[] }[]
+): TerminalGroup[] {
+  const sorted = [...terminals].sort((a, b) => a.order - b.order);
+  
+  return sorted.map((t) => ({
+    terminalCode: t.terminal_code,
+    // Use connector_lines if defined, otherwise fall back to single print_label
+    connectorLines: t.connector_lines && t.connector_lines.length > 0 
+      ? t.connector_lines 
+      : [t.print_label],
+  }));
+}
 
 export default function WiringEditorV2Client(props: Props) {
   const { projectId, subCenterId, canWrite, initialState } = props;
@@ -316,25 +348,49 @@ export default function WiringEditorV2Client(props: Props) {
   }
 
   // Get point data from canonical rows for the current page (fix for B: data visibility)
+  // Maps terminal_code (DI1, UI1, AO1, DO1, etc.) to the canonical row
   const pagePointData = useMemo(() => {
     if (!selectedPage?.moduleRef?.moduleName) return new Map<string, CanonicalRow>();
     const moduleName = selectedPage.moduleRef.moduleName;
+    const templateId = selectedPage.templateId;
     const pointMap = new Map<string, CanonicalRow>();
 
-    for (const row of props.canonicalRows) {
-      if (row.module_name !== moduleName) continue;
+    // Determine the terminal code prefix based on template type
+    const prefix = templateId.replace(/-\d+.*$/, '').replace('-V', '').replace('-FA', ''); // DI, UI, AO, DO
 
-      // Extract terminal code from the row
+    for (const row of props.canonicalRows) {
+      // Match by module_name if available
+      if (row.module_name && row.module_name !== moduleName) continue;
+      // Also try matching by module_xml_type if module_name not set
+      if (!row.module_name && row.module_xml_type) {
+        const xmlUpper = String(row.module_xml_type).toUpperCase();
+        if (!xmlUpper.includes(prefix)) continue;
+      }
+
+      // Extract channel number and construct terminal code
       const inCh = row.input_channel_number;
       const outCh = row.output_channel_number;
       let terminalCode = '';
 
-      if (typeof inCh === 'number' || (typeof inCh === 'string' && inCh.trim())) {
-        terminalCode = `IN${inCh}`;
-      } else if (typeof outCh === 'number' || (typeof outCh === 'string' && outCh.trim())) {
-        terminalCode = `OUT${outCh}`;
-      } else if (row.point_name) {
-        terminalCode = `POINT:${row.point_name}`;
+      // For DI/UI modules, use input_channel_number
+      if (prefix === 'DI' || prefix === 'UI') {
+        if (inCh != null && String(inCh).trim()) {
+          terminalCode = `${prefix}${inCh}`;
+        }
+      }
+      // For AO/DO modules, use output_channel_number
+      else if (prefix === 'AO' || prefix === 'DO') {
+        if (outCh != null && String(outCh).trim()) {
+          terminalCode = `${prefix}${outCh}`;
+        }
+      }
+      // Fallback: try both channels
+      else {
+        if (inCh != null && String(inCh).trim()) {
+          terminalCode = `IN${inCh}`;
+        } else if (outCh != null && String(outCh).trim()) {
+          terminalCode = `OUT${outCh}`;
+        }
       }
 
       if (terminalCode) {
@@ -342,23 +398,47 @@ export default function WiringEditorV2Client(props: Props) {
       }
     }
 
-    return pointMap;
-  }, [selectedPage, props.canonicalRows]);
+    // Also populate from workbookRows for latest data
+    for (const row of workbookRows) {
+      if (row.module_name && row.module_name !== moduleName) continue;
+      
+      const inCh = row.input_channel_number;
+      const outCh = row.output_channel_number;
+      let terminalCode = '';
 
-  // Print-grid rendering with white table, thin borders (fix for A: parity)
+      if (prefix === 'DI' || prefix === 'UI') {
+        if (inCh != null && String(inCh).trim()) {
+          terminalCode = `${prefix}${inCh}`;
+        }
+      } else if (prefix === 'AO' || prefix === 'DO') {
+        if (outCh != null && String(outCh).trim()) {
+          terminalCode = `${prefix}${outCh}`;
+        }
+      }
+
+      // Workbook takes precedence over canonical rows
+      if (terminalCode) {
+        pointMap.set(terminalCode, row);
+      }
+    }
+
+    return pointMap;
+  }, [selectedPage, props.canonicalRows, workbookRows]);
+
+  // Print-grid rendering with proper rowSpan grouping (fix for A: parity)
   function renderGrid() {
     if (!selectedPage) return <div className="muted">No pages.</div>;
     const template = getTemplate(selectedPage.templateId);
-    const terminals = [...template.terminals].sort((a, b) => a.order - b.order);
+    const terminalGroups = groupTerminalsForPrintGrid(template.terminals);
 
     return (
       <div style={{ background: '#fff', padding: 16, border: '1px solid #ccc' }}>
         {/* Page header matching golden reference format */}
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontWeight: 700, fontSize: 14 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#000' }}>
             {selectedPage.code}_{selectedPage.templateId}
           </div>
-          <div style={{ fontSize: 12, color: '#333' }}>
+          <div style={{ fontSize: 12, color: '#000' }}>
             {selectedPage.templateId}
           </div>
         </div>
@@ -402,128 +482,153 @@ export default function WiringEditorV2Client(props: Props) {
               </tr>
             </thead>
             <tbody>
-              {terminals.map((t) => {
-                const k = keyForTerminal(selectedPage.id, t.terminal_code);
+              {terminalGroups.map((group) => {
+                const groupRows = Math.max(group.connectorLines.length, 1);
+                const k = keyForTerminal(selectedPage.id, group.terminalCode);
                 const terminalState = state.terminals[k] ?? {};
 
                 // Get point data from canonical rows (fix for B: data visibility)
-                const pointData = pagePointData.get(t.terminal_code);
-                const deviceTag = terminalState.deviceText ?? String(pointData?.point_name ?? '');
-                const deviceDesc = terminalState.description ?? String(pointData?.point_descr ?? '');
+                // First try the terminal state, then workbook/canonical rows
+                const pointData = pagePointData.get(group.terminalCode);
+                const deviceTag = terminalState.deviceText || String(pointData?.point_name ?? '');
+                const deviceDesc = terminalState.description || String(pointData?.point_descr ?? '');
 
-                return (
-                  <tr key={k}>
-                    {/* Tunnus (device tag) */}
-                    <td style={printGridStyles.td}>
-                      <input
-                        style={printGridStyles.input}
-                        defaultValue={deviceTag}
-                        disabled={!canWrite}
-                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { deviceText: e.currentTarget.value })}
-                      />
-                    </td>
-                    {/* Teksti (description) */}
-                    <td style={printGridStyles.td}>
-                      <input
-                        style={printGridStyles.input}
-                        defaultValue={deviceDesc}
-                        disabled={!canWrite}
-                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { ...terminalState, description: e.currentTarget.value } as WiringV2TerminalRow)}
-                      />
-                    </td>
-                    {/* Liitin (connector from template) */}
+                return group.connectorLines.map((connectorLine, lineIdx) => (
+                  <tr key={`${k}:${lineIdx}`}>
+                    {/* Cells with rowSpan (only on first row of group) */}
+                    {lineIdx === 0 && (
+                      <>
+                        {/* Tunnus (device tag) - rowSpan */}
+                        <td style={printGridStyles.td} rowSpan={groupRows}>
+                          <input
+                            style={printGridStyles.input}
+                            defaultValue={deviceTag}
+                            disabled={!canWrite}
+                            onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { deviceText: e.currentTarget.value })}
+                          />
+                        </td>
+                        {/* Teksti (description) - rowSpan */}
+                        <td style={printGridStyles.td} rowSpan={groupRows}>
+                          <input
+                            style={printGridStyles.input}
+                            defaultValue={deviceDesc}
+                            disabled={!canWrite}
+                            onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, description: e.currentTarget.value } as WiringV2TerminalRow)}
+                          />
+                        </td>
+                      </>
+                    )}
+                    {/* Liitin (connector line) - per row */}
                     <td style={{ ...printGridStyles.td, fontSize: 9, lineHeight: 1.2 }}>
-                      {t.print_label}
+                      {connectorLine}
                     </td>
-                    {/* Kaapeli 1: Pari nro tai johdin */}
+                    {/* Kaapeli 1: Pari nro tai johdin - per row */}
                     <td style={printGridStyles.td}>
-                      <input
-                        style={printGridStyles.input}
-                        defaultValue={(terminalState as Record<string, unknown>).cable1Pair as string ?? ''}
-                        disabled={!canWrite}
-                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { ...terminalState, cable1Pair: e.currentTarget.value } as WiringV2TerminalRow)}
-                      />
+                      {lineIdx === 0 && (
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={(terminalState as Record<string, unknown>).cable1Pair as string ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, cable1Pair: e.currentTarget.value } as WiringV2TerminalRow)}
+                        />
+                      )}
                     </td>
-                    {/* Kaapeli 1: Tyyppi koko nro */}
+                    {/* Kaapeli 1: Tyyppi koko nro - rowSpan */}
+                    {lineIdx === 0 && (
+                      <td style={printGridStyles.td} rowSpan={groupRows}>
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={terminalState.cable1 ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { cable1: e.currentTarget.value })}
+                        />
+                      </td>
+                    )}
+                    {/* Välikytkentäpaikka ja liittimet - per row */}
                     <td style={printGridStyles.td}>
-                      <input
-                        style={printGridStyles.input}
-                        defaultValue={terminalState.cable1 ?? ''}
-                        disabled={!canWrite}
-                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { cable1: e.currentTarget.value })}
-                      />
+                      {lineIdx === 0 && (
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={(terminalState as Record<string, unknown>).intermediateTerminal as string ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, intermediateTerminal: e.currentTarget.value } as WiringV2TerminalRow)}
+                        />
+                      )}
                     </td>
-                    {/* Välikytkentäpaikka ja liittimet */}
+                    {/* Kaapeli 2: Tyyppi koko nro - rowSpan */}
+                    {lineIdx === 0 && (
+                      <td style={printGridStyles.td} rowSpan={groupRows}>
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={terminalState.cable2 ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { cable2: e.currentTarget.value })}
+                        />
+                      </td>
+                    )}
+                    {/* Kaapeli 2: Pari nro tai johdin - per row */}
                     <td style={printGridStyles.td}>
-                      <input
-                        style={printGridStyles.input}
-                        defaultValue={(terminalState as Record<string, unknown>).intermediateTerminal as string ?? ''}
-                        disabled={!canWrite}
-                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { ...terminalState, intermediateTerminal: e.currentTarget.value } as WiringV2TerminalRow)}
-                      />
+                      {lineIdx === 0 && (
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={(terminalState as Record<string, unknown>).cable2Pair as string ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, cable2Pair: e.currentTarget.value } as WiringV2TerminalRow)}
+                        />
+                      )}
                     </td>
-                    {/* Kaapeli 2: Tyyppi koko nro */}
+                    {/* Minne johdetaan: Liitin - per row */}
                     <td style={printGridStyles.td}>
-                      <input
-                        style={printGridStyles.input}
-                        defaultValue={terminalState.cable2 ?? ''}
-                        disabled={!canWrite}
-                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { cable2: e.currentTarget.value })}
-                      />
+                      {lineIdx === 0 && (
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={(terminalState as Record<string, unknown>).destinationConnector as string ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, destinationConnector: e.currentTarget.value } as WiringV2TerminalRow)}
+                        />
+                      )}
                     </td>
-                    {/* Kaapeli 2: Pari nro tai johdin */}
-                    <td style={printGridStyles.td}>
-                      <input
-                        style={printGridStyles.input}
-                        defaultValue={(terminalState as Record<string, unknown>).cable2Pair as string ?? ''}
-                        disabled={!canWrite}
-                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { ...terminalState, cable2Pair: e.currentTarget.value } as WiringV2TerminalRow)}
-                      />
-                    </td>
-                    {/* Minne johdetaan: Liitin */}
-                    <td style={printGridStyles.td}>
-                      <input
-                        style={printGridStyles.input}
-                        defaultValue={(terminalState as Record<string, unknown>).destinationConnector as string ?? ''}
-                        disabled={!canWrite}
-                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { ...terminalState, destinationConnector: e.currentTarget.value } as WiringV2TerminalRow)}
-                      />
-                    </td>
-                    {/* Minne johdetaan: Kytkentäpaikka */}
-                    <td style={printGridStyles.td}>
-                      <input
-                        style={printGridStyles.input}
-                        defaultValue={terminalState.destination ?? ''}
-                        disabled={!canWrite}
-                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { destination: e.currentTarget.value })}
-                      />
-                    </td>
-                    {/* Kytketty (checkbox) */}
-                    <td style={{ ...printGridStyles.td, textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        disabled={!canWrite}
-                        defaultChecked={Boolean((terminalState as Record<string, unknown>).connected)}
-                        onChange={(e) => patchTerminal(selectedPage.id, t.terminal_code, { ...terminalState, connected: e.currentTarget.checked } as WiringV2TerminalRow)}
-                      />
-                    </td>
-                    {/* Tarkastettu (checkbox) */}
-                    <td style={{ ...printGridStyles.td, textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        disabled={!canWrite}
-                        defaultChecked={Boolean((terminalState as Record<string, unknown>).verified)}
-                        onChange={(e) => patchTerminal(selectedPage.id, t.terminal_code, { ...terminalState, verified: e.currentTarget.checked } as WiringV2TerminalRow)}
-                      />
-                    </td>
+                    {/* Minne johdetaan: Kytkentäpaikka - rowSpan */}
+                    {lineIdx === 0 && (
+                      <td style={printGridStyles.td} rowSpan={groupRows}>
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={terminalState.destination ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { destination: e.currentTarget.value })}
+                        />
+                      </td>
+                    )}
+                    {/* Kytketty (checkbox) - rowSpan */}
+                    {lineIdx === 0 && (
+                      <td style={{ ...printGridStyles.td, textAlign: 'center' }} rowSpan={groupRows}>
+                        <input
+                          type="checkbox"
+                          disabled={!canWrite}
+                          defaultChecked={Boolean((terminalState as Record<string, unknown>).connected)}
+                          onChange={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, connected: e.currentTarget.checked } as WiringV2TerminalRow)}
+                        />
+                      </td>
+                    )}
+                    {/* Tarkastettu (checkbox) - rowSpan */}
+                    {lineIdx === 0 && (
+                      <td style={{ ...printGridStyles.td, textAlign: 'center' }} rowSpan={groupRows}>
+                        <input
+                          type="checkbox"
+                          disabled={!canWrite}
+                          defaultChecked={Boolean((terminalState as Record<string, unknown>).verified)}
+                          onChange={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, verified: e.currentTarget.checked } as WiringV2TerminalRow)}
+                        />
+                      </td>
+                    )}
                   </tr>
-                );
+                ));
               })}
             </tbody>
           </table>
         </div>
 
-        <div style={{ marginTop: 8, fontSize: 10, color: '#666' }}>
+        <div style={{ marginTop: 8, fontSize: 10, color: '#000' }}>
           Sarakkeet: docs/ui_refs/wiring_editor_v2/Kytkentakuva_DI16.png
         </div>
       </div>

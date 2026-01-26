@@ -39,6 +39,10 @@ export type WiringV2TerminalRow = {
   destination?: string;
   /** Symboli/Piirrosmerkintä */
   symbol?: WiringV2TerminalSymbol;
+  /** Kytketty (connected checkbox) */
+  connected?: boolean;
+  /** Tarkastettu (verified checkbox) */
+  verified?: boolean;
 };
 
 export type WiringV2Page = {
@@ -162,6 +166,8 @@ export function readWiringV2State(settings: unknown): WiringV2State {
                   : undefined,
             }
           : undefined,
+        connected: typeof v['connected'] === 'boolean' ? v['connected'] : undefined,
+        verified: typeof v['verified'] === 'boolean' ? v['verified'] : undefined,
       };
     }
   }

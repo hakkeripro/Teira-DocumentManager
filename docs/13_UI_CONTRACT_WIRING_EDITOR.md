@@ -27,11 +27,16 @@ Vaatimus:
   2) **Työkirja** (excelimäinen bulk-edit; sarakkeet/otsikot 1:1 referenssiin)
 
 ## Layout
-- Vasen: Pages-puu
+
+**FINAL-S2 (2026-01-25):** Layout-rakenne lukittu:
+- **Vasen**: Pages-puu (sivulista)
   - Sivut järjestyksessä, drag/drop reorder
-  - “Kansiomaiset” ryhmät ovat **vain UI-ryhmittelyä** (ei tallennu DB:hen).
-  - Kansion edessä kansio-ikoni; ryhmät avattavissa/suljettavissa.
-- Oikea: A4 portrait -sivu (print-grid), jonka mittasuhde ja sarakejako vastaa referenssejä.
+  - **"Add module"** -kontrolli on **vasemman kortin yläosassa** (header), ei puun sisällä tai alaosassa
+- **Oikea**: A4 portrait -sivu (print-grid), jonka mittasuhde ja sarakejako vastaa referenssejä
+
+**FINAL-S1 (2026-01-25):** Folder expand/collapse -toiminto on tarkoitettu **vain päänavigaatioon** (Areas/Projects main tree).
+- Wiring editorin pages-puussa **ei käytetä** kansioita ellei erikseen määritetä.
+- Pages-puu on yksinkertainen lista ilman UI-ryhmittelyä.
 
 ## Sivunumerointi ja lukitus
 - AS-P-keskuksessa oletussivut:
@@ -40,15 +45,17 @@ Vaatimus:
 - Käyttäjä voi lisätä PS-sivuja myöhemmin vapaasti mihin väliin tahansa (vain oletus-PS on lukittu).
 - Moduulin lisäys UI:sta:
   - uusi moduulisivu saa aina seuraavan vapaan koodin maxin jälkeen (ei täytetä aukkoja alusta).
-- Reorder ei muuta page_codea.
+- **Reorder päivittää page_code** (address sync): sivukoodit päivittyvät uuden järjestyksen mukaisiksi.
 
 ## Print-grid sarakerakenne (rakenteeltaan 1:1)
 Taulukon sarakkeet ja ryhmittely vastaa referenssiä:
 - Tunnus / Teksti (kenttälaiteblokki)
 - Liitin (monirivinen; template tuottaa "connector lines")
-- Kaapeli 1: Tyyppi/koko/nro, Välikytkentäpaikka/rimmet, Pari nro/johdin
-- Kaapeli 2: Tyyppi/koko/nro, Pari nro/johdin
+- Kaapelointitiedot: Kaapeli 1 (Pari nro, Tyyppi koko nro), Välikytkentäpaikka ja liittimet
+- Kaapeli 2: Tyyppi koko nro, Pari nro tai johdin
 - Minne johdetaan: Liitin, Kytkentäpaikka
+- Kytketty (checkbox)
+- Tarkastettu (checkbox)
 
 ## Liitin (stacked labels) — connector lines
 

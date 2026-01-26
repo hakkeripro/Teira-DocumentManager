@@ -1,5 +1,34 @@
 # Changelog
 
+## Sprint 1b — Blockers Fix (2026-01-25)
+
+### User-Approved Spec Updates
+- **FINAL-S1**: Folder expand/collapse intended ONLY for main tree (Areas/Projects nav), NOT wiring editor pages tree
+- **FINAL-S2**: Wiring editor layout: Pages tree LEFT, A4 drawings RIGHT, "Add module" in LEFT card header/top
+
+### A) Print-Grid Parity Fix
+- Changed from dark theme to white table look with thin black borders (per golden ref)
+- Updated column structure to exact match `Kytkentakuva_DI16.png`:
+  - Tunnus | Teksti | Liitin | Kaapelointitiedot (Pari/Tyyppi/Välikytkentä) | Kaapeli 2 | Minne johdetaan | Kytketty | Tarkastettu
+- Added Kytketty/Tarkastettu checkbox columns
+
+### B) Data Visibility Fix
+- Point details from canonical rows now appear in Kytkentäkuva view
+- Device tag and description populated from workbook data when terminal state is empty
+
+### C) Reorder Address Sync Fix
+- Reorder now updates page codes based on new position
+- Non-locked pages get sequential codes after reorder
+- Updated spec: "Reorder päivittää page_code"
+
+### D) Import Accept Flow Fix
+- Import file data now cached as base64 in client state
+- Accept no longer requires re-selecting the file
+- Accept uses cached data to commit and signals `createRevision=true`
+
+### Type Extensions
+- Added `connected` and `verified` boolean fields to `WiringV2TerminalRow`
+
 ## Sprint 1 (2026-01-25)
 ### Print-Grid Parity
 - Updated wiring editor print-grid columns to match `docs/ui_refs/wiring_editor_v2/Kytkentakuva_DI16.png` exactly

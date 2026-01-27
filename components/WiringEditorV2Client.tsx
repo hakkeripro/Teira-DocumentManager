@@ -989,7 +989,15 @@ export default function WiringEditorV2Client(props: Props) {
       </div>
 
       {tab === 'editor' ? (
-        <div className="row" style={{ gap: 12, alignItems: 'flex-start' }}>
+        <div
+          className="row"
+          style={{
+            gap: 12,
+            alignItems: 'flex-start',
+            flexWrap: 'nowrap',
+            overflowX: 'auto',
+          }}
+        >
           {/* LEFT: Pages tree with Add module in header (per FINAL-S2) */}
           <div className="card" style={{ width: 300, padding: 12 }}>
             {/* Add module controls at TOP of card (per FINAL-S2) */}

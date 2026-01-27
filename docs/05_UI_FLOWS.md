@@ -65,6 +65,16 @@ Kytkentäkuvat avautuvat suoraan editoriin, jossa on:
   - Publish PDF
   - (myöhemmin) Export workbook / import workbook
 
+**Layout diagram (locked)**
+
+```
+┌──────────────────────┬──────────────────────────────────────────┐
+│ Pages panel (left)   │ A4 wiring canvas (right, never below)    │
+│ - Add module (header)│ Print-grid / table view                  │
+│ - Pages list         │                                          │
+└──────────────────────┴──────────────────────────────────────────┘
+```
+
 **Sivujen järjestys**
 - Drag & drop järjestys puussa.
 - Lukitut sivut (01 PS ja 02 AS-P AS-P-keskuksessa) eivät ole siirrettävissä.
@@ -103,4 +113,3 @@ Layout on erillinen näkymä:
 - käyttäjä valitsee kaappirungon (esim. `SXWOS-2`)
 - raahaa moduulit ja oheislaitteet paikoilleen
 - layout tuottaa määrälaskentaa ja linkittyy kytkentäkuvien moduuleihin.
-

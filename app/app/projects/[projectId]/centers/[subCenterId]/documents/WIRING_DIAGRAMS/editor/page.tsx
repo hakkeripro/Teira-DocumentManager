@@ -50,6 +50,8 @@ export default async function WiringDiagramEditorPage({
     <WiringEditorV2Client
       projectId={project.id}
       subCenterId={center.id}
+      projectCode={project.code}
+      subCenterCode={center.code ?? center.id}
       canWrite={canWrite(actor.role)}
       initialState={initialState}
       canonicalRows={rows}

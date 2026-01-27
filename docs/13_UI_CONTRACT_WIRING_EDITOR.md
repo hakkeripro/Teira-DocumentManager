@@ -38,6 +38,16 @@ Vaatimus:
   - A4-sivun mittasuhde ja sarakejako vastaa referenssejä
   - **A4-kytkentäkuva renderöidään aina Pages-paneelin oikealle puolelle — ei koskaan Pages-paneelin alapuolelle.** (LOCKED)
 
+### Document Workspace Shell (Sprint 1)
+- WIRING-editori käyttää kolmen paneelin workspace-shelliä:
+  - **Vasen**: Pages/Modules/Devices -välilehdet (flat list, ei foldereita).
+  - **Keskellä**: A4 print-grid + zoom controls (Fit width oletus).
+  - **Oikea**: Inspector + Issues-paneeli (MVP).
+- Top bar (WIRING):
+  - breadcrumbs + doc context + revision placeholder + save-status
+  - **Import XML / Export XML / Audit** -toiminnot näkyvissä (ei erillistä import/export-sivua)
+  - Issues-badge “Issues: N” (dok-scope)
+
 **FINAL-S1 (2026-01-25):** Folder expand/collapse -toiminto on tarkoitettu **vain päänavigaatioon** (Areas/Projects main tree).
 - Wiring editorin Pages-listassa **ei käytetä** kansioita eikä collapse/expand -UI:ta ellei erikseen määritetä.
 - Pages-lista on yksinkertainen, “flat list” -tyyppinen.

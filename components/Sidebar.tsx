@@ -41,32 +41,43 @@ export async function Sidebar({ actor }: { actor: Actor }) {
           <ul className="tree">
             {areas.map((a) => (
               <li key={a.id}>
-                <Link className="treeArea" href={`/app/areas/${a.id}`}>
-                  {a.name}
-                </Link>
-                {a.projects.length > 0 && (
-                  <ul className="treeProjects">
-                    {a.projects.map((p) => (
-                      <li key={p.id}>
-                        <Link className="treeProject" href={`/app/projects/${p.id}`}>
-                          {p.code} — {p.name}
-                        </Link>
+                <details className="treeFolder" open>
+                  <summary className="treeSummary">
+                    <span className="treeCaret" aria-hidden="true">▾</span>
+                    <Link className="treeArea" href={`/app/areas/${a.id}`}>
+                      {a.name}
+                    </Link>
+                  </summary>
 
-                        {p.subCenters.length > 0 && (
-                          <ul className="treeProjects">
-                            {p.subCenters.map((sc) => (
-                              <li key={sc.id}>
-                                <Link className="treeProject" href={`/app/projects/${p.id}/centers/${sc.id}/documents`}>
-                                  {sc.code ?? '—'} — {sc.name}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                  {a.projects.length > 0 && (
+                    <ul className="treeProjects">
+                      {a.projects.map((p) => (
+                        <li key={p.id}>
+                          <details className="treeFolder" open>
+                            <summary className="treeSummary">
+                              <span className="treeCaret" aria-hidden="true">▾</span>
+                              <Link className="treeProject" href={`/app/projects/${p.id}`}>
+                                {p.code} — {p.name}
+                              </Link>
+                            </summary>
+
+                            {p.subCenters.length > 0 && (
+                              <ul className="treeProjects">
+                                {p.subCenters.map((sc) => (
+                                  <li key={sc.id}>
+                                    <Link className="treeProject" href={`/app/projects/${p.id}/centers/${sc.id}/documents`}>
+                                      {sc.code ?? '—'} — {sc.name}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </details>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </details>
               </li>
             ))}
           </ul>

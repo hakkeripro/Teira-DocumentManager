@@ -21,9 +21,15 @@ export type WiringV2TerminalSymbol = {
 export type WiringV2TerminalRow = {
   deviceText?: string;
   cable1?: string;
+  cable1Pair?: string;
+  intermediate?: string;
   cable2?: string;
+  cable2Pair?: string;
   destination?: string;
+  destinationConnector?: string;
   symbol?: WiringV2TerminalSymbol;
+  connected?: boolean;
+  inspected?: boolean;
 };
 
 export type WiringV2Page = {
@@ -131,8 +137,13 @@ export function readWiringV2State(settings: unknown): WiringV2State {
       terminals[k] = {
         deviceText: typeof v['deviceText'] === 'string' ? (v['deviceText'] as string) : undefined,
         cable1: typeof v['cable1'] === 'string' ? (v['cable1'] as string) : undefined,
+        cable1Pair: typeof v['cable1Pair'] === 'string' ? (v['cable1Pair'] as string) : undefined,
+        intermediate: typeof v['intermediate'] === 'string' ? (v['intermediate'] as string) : undefined,
         cable2: typeof v['cable2'] === 'string' ? (v['cable2'] as string) : undefined,
+        cable2Pair: typeof v['cable2Pair'] === 'string' ? (v['cable2Pair'] as string) : undefined,
         destination: typeof v['destination'] === 'string' ? (v['destination'] as string) : undefined,
+        destinationConnector:
+          typeof v['destinationConnector'] === 'string' ? (v['destinationConnector'] as string) : undefined,
         symbol: isRecord(v['symbol'])
           ? {
               type: String((v['symbol'] as AnyRecord)['type'] ?? '').trim(),
@@ -142,6 +153,8 @@ export function readWiringV2State(settings: unknown): WiringV2State {
                   : undefined,
             }
           : undefined,
+        connected: typeof v['connected'] === 'boolean' ? (v['connected'] as boolean) : undefined,
+        inspected: typeof v['inspected'] === 'boolean' ? (v['inspected'] as boolean) : undefined,
       };
     }
   }

@@ -138,6 +138,33 @@ button[disabled] { opacity: 0.5; cursor: not-allowed; }
 .treeArea:hover { text-decoration: none; filter: brightness(1.05); }
 .treeProjects { list-style: none; margin: 8px 0 0 12px; padding: 0; display: grid; gap: 6px; }
 .treeProject { color: var(--muted); text-decoration: none; }
+
+.table.print-grid {
+  background: #ffffff;
+  color: #111111;
+  border: 1px solid #d0d0d0;
+}
+
+.table.print-grid th,
+.table.print-grid td {
+  border: 1px solid #d0d0d0;
+  color: #111111;
+  background: #ffffff;
+  padding: 8px 6px;
+  vertical-align: top;
+}
+
+.table.print-grid th {
+  font-weight: 600;
+}
+
+.table.print-grid input,
+.table.print-grid select,
+.table.print-grid textarea {
+  background: #ffffff;
+  color: #111111;
+  border: 1px solid #d0d0d0;
+}
 .treeProject:hover { color: var(--text); text-decoration: none; }
 
 .error { background: rgba(255, 80, 80, 0.12); border: 1px solid rgba(255, 80, 80, 0.28); padding: 10px 12px; border-radius: 10px; }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import Link from 'next/link';
 import type { CanonicalRow, WiringV2Page, WiringV2State, WiringV2TerminalRow } from '@/lib/wiringEditorV2';
+import { extractTerminalCode } from '@/lib/wiringEditor';
 import { MODULE_TEMPLATES, type ModuleTemplateId, getTemplate } from '@/lib/templates/moduleTemplates';
 
 type Props = {
@@ -93,6 +94,10 @@ function parseTSV(text: string): string[][] {
     .split('\n')
     .filter((line) => line.length > 0)
     .map((line) => line.split('\t'));
+}
+
+function getFieldString(v: unknown): string {
+  return typeof v === 'string' ? v : v == null ? '' : String(v);
 }
 
 export default function WiringEditorV2Client(props: Props) {
@@ -216,6 +221,14 @@ export default function WiringEditorV2Client(props: Props) {
     if (!selectedPage) return <div className="muted">No pages.</div>;
     const template = getTemplate(selectedPage.templateId);
     const terminals = [...template.terminals].sort((a, b) => a.order - b.order);
+    const moduleName = selectedPage.moduleRef?.moduleName ?? selectedPage.title;
+    const pointByTerminal = new Map<string, CanonicalRow>();
+    for (const r of workbookRows) {
+      if (getFieldString(r?.['module_name']).trim() !== moduleName) continue;
+      const term = extractTerminalCode(r as Record<string, unknown>);
+      if (!term || pointByTerminal.has(term)) continue;
+      pointByTerminal.set(term, r);
+    }
     return (
       <div className="card" style={{ overflowX: 'auto' }}>
         <div className="row spaceBetween" style={{ gap: 12 }}>
@@ -233,59 +246,150 @@ export default function WiringEditorV2Client(props: Props) {
           </div>
         </div>
 
-        <table className="table" style={{ minWidth: 980 }}>
+        <table className="table print-grid" style={{ minWidth: 1400 }}>
           <thead>
             <tr>
-              <th style={{ width: 260 }}>Tunnus / Teksti</th>
-              <th style={{ width: 140 }}>Liitin</th>
-              <th style={{ width: 220 }}>Kaapeli 1</th>
-              <th style={{ width: 220 }}>Kaapeli 2</th>
-              <th style={{ width: 260 }}>Minne johdetaan</th>
+              <th rowSpan={2} style={{ width: 140 }}>Tunnus</th>
+              <th rowSpan={2} style={{ width: 220 }}>Teksti</th>
+              <th rowSpan={2} style={{ width: 140 }}>Liitin</th>
+              <th colSpan={3} style={{ width: 360 }}>Kaapeli 1</th>
+              <th colSpan={2} style={{ width: 240 }}>Kaapeli 2</th>
+              <th colSpan={2} style={{ width: 260 }}>Minne johdetaan</th>
+              <th rowSpan={2} style={{ width: 180 }}>Symboli / Piirrosmerkintä</th>
+              <th rowSpan={2} style={{ width: 100 }}>Kytketty</th>
+              <th rowSpan={2} style={{ width: 110 }}>Tarkastettu</th>
+            </tr>
+            <tr>
+              <th style={{ width: 140 }}>Tyyppi koko nro</th>
+              <th style={{ width: 120 }}>Pari nro / johdin</th>
+              <th style={{ width: 140 }}>Välikytkentäpaikka ja liittimet</th>
+              <th style={{ width: 140 }}>Tyyppi koko nro</th>
+              <th style={{ width: 120 }}>Pari nro / johdin</th>
+              <th style={{ width: 140 }}>Kytkentäpaikka</th>
+              <th style={{ width: 120 }}>Liitin</th>
             </tr>
           </thead>
           <tbody>
             {terminals.map((t) => {
               const k = keyForTerminal(selectedPage.id, t.terminal_code);
               const row = state.terminals[k] ?? {};
-              return (
-                <tr key={k}>
+              const point = pointByTerminal.get(t.terminal_code);
+              const pointName = getFieldString(point?.['point_name']).trim();
+              const pointText = getFieldString(point?.['note2']).trim() || getFieldString(point?.['point_descr']).trim();
+              const connectorLines = t.connector_lines && t.connector_lines.length > 0 ? t.connector_lines : [t.print_label];
+              const groupRows = Math.max(connectorLines.length, 1);
+
+              return connectorLines.map((line, idx) => (
+                <tr key={`${k}:${idx}`}>
+                  {idx === 0 ? (
+                    <>
+                      <td rowSpan={groupRows}>
+                        {pointName ? <div className="mono">{pointName}</div> : <span className="muted">—</span>}
+                      </td>
+                      <td rowSpan={groupRows}>
+                        {pointText ? <div>{pointText}</div> : <span className="muted">—</span>}
+                      </td>
+                    </>
+                  ) : null}
+                  <td>
+                    <div className="mono">{line}</div>
+                  </td>
+                  {idx === 0 ? (
+                    <td rowSpan={groupRows}>
+                      <input
+                        className="input"
+                        defaultValue={row.cable1 ?? ''}
+                        disabled={!canWrite}
+                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { cable1: e.currentTarget.value })}
+                      />
+                    </td>
+                  ) : null}
                   <td>
                     <input
                       className="input"
-                      defaultValue={row.deviceText ?? ''}
+                      defaultValue={row.cable1Pair ?? ''}
                       disabled={!canWrite}
-                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { deviceText: e.currentTarget.value })}
-                    />
-                  </td>
-                  <td>
-                    <div className="mono">{t.print_label}</div>
-                  </td>
-                  <td>
-                    <input
-                      className="input"
-                      defaultValue={row.cable1 ?? ''}
-                      disabled={!canWrite}
-                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { cable1: e.currentTarget.value })}
+                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { cable1Pair: e.currentTarget.value })}
                     />
                   </td>
                   <td>
                     <input
                       className="input"
-                      defaultValue={row.cable2 ?? ''}
+                      defaultValue={row.intermediate ?? ''}
                       disabled={!canWrite}
-                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { cable2: e.currentTarget.value })}
+                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { intermediate: e.currentTarget.value })}
                     />
                   </td>
+                  {idx === 0 ? (
+                    <td rowSpan={groupRows}>
+                      <input
+                        className="input"
+                        defaultValue={row.cable2 ?? ''}
+                        disabled={!canWrite}
+                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { cable2: e.currentTarget.value })}
+                      />
+                    </td>
+                  ) : null}
                   <td>
                     <input
                       className="input"
-                      defaultValue={row.destination ?? ''}
+                      defaultValue={row.cable2Pair ?? ''}
                       disabled={!canWrite}
-                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { destination: e.currentTarget.value })}
+                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { cable2Pair: e.currentTarget.value })}
                     />
                   </td>
+                  {idx === 0 ? (
+                    <td rowSpan={groupRows}>
+                      <input
+                        className="input"
+                        defaultValue={row.destination ?? ''}
+                        disabled={!canWrite}
+                        onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { destination: e.currentTarget.value })}
+                      />
+                    </td>
+                  ) : null}
+                  <td>
+                    <input
+                      className="input"
+                      defaultValue={row.destinationConnector ?? ''}
+                      disabled={!canWrite}
+                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { destinationConnector: e.currentTarget.value })}
+                    />
+                  </td>
+                  {idx === 0 ? (
+                    <td rowSpan={groupRows}>
+                      {row.symbol?.type ? (
+                        <div className="mono small">
+                          {row.symbol.type}
+                          {row.symbol.label ? ` ${row.symbol.label}` : ''}
+                        </div>
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
+                    </td>
+                  ) : null}
+                  {idx === 0 ? (
+                    <td rowSpan={groupRows} style={{ textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        defaultChecked={Boolean(row.connected)}
+                        disabled={!canWrite}
+                        onChange={(e) => patchTerminal(selectedPage.id, t.terminal_code, { connected: e.currentTarget.checked })}
+                      />
+                    </td>
+                  ) : null}
+                  {idx === 0 ? (
+                    <td rowSpan={groupRows} style={{ textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        defaultChecked={Boolean(row.inspected)}
+                        disabled={!canWrite}
+                        onChange={(e) => patchTerminal(selectedPage.id, t.terminal_code, { inspected: e.currentTarget.checked })}
+                      />
+                    </td>
+                  ) : null}
                 </tr>
-              );
+              ));
             })}
           </tbody>
         </table>

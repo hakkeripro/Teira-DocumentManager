@@ -47,3 +47,7 @@ Tässä tiedostossa on vain aidosti avoimet kohdat. Lukitut päätökset löytyv
 - Current columns are a simplified set from canonical rows.
 - **Required:** Map workbook columns 1:1 to golden reference.
 
+### OI-008 Issues MVP: connector/terminal field definition (Target: Sprint 1 follow-up)
+**Miksi:** Issues MVP needs a clear source field for “Missing connector/terminal field” in WIRING.
+- Tarvitaan käyttäjältä: vahvistus kentästä (esim. destination connector vs. other connector field) + referenssi (screenshot/pdf sivu).
+- Vaikutus: Issues-laskenta ja Inspectorin fokusointi.

@@ -5,10 +5,13 @@ import type { DragEvent, ChangeEvent } from 'react';
 import Link from 'next/link';
 import type { CanonicalRow, WiringV2Page, WiringV2State, WiringV2TerminalRow } from '@/lib/wiringEditorV2';
 import { MODULE_TEMPLATES, type ModuleTemplateId, getTemplate } from '@/lib/templates/moduleTemplates';
+import DocumentWorkspaceShell from '@/components/DocumentWorkspaceShell';
 
 type Props = {
   projectId: string;
   subCenterId: string;
+  projectCode: string;
+  subCenterCode: string;
   canWrite: boolean;
   initialState: WiringV2State;
   canonicalRows: CanonicalRow[];
@@ -23,6 +26,17 @@ type ImportSession = {
   /** Base64-encoded file content for commit */
   fileData: string;
   fileType: string;
+};
+
+type LeftPanelTab = 'pages' | 'modules' | 'devices';
+type RightPanelTab = 'inspector' | 'issues';
+
+type WiringIssue = {
+  id: string;
+  pageId: string;
+  terminalCode: string;
+  field: string;
+  message: string;
 };
 
 const WORKBOOK_COLUMNS: { key: string; label: string }[] = [
@@ -104,6 +118,11 @@ function parseTSV(text: string): string[][] {
     .map((line) => line.split('\t'));
 }
 
+function autoResizeTextarea(target: HTMLTextAreaElement) {
+  target.style.height = 'auto';
+  target.style.height = `${target.scrollHeight}px`;
+}
+
 /** Convert file to base64 for caching */
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -152,9 +171,11 @@ const printGridStyles = {
   td: {
     border: '1px solid #000',
     padding: '2px 4px',
-    verticalAlign: 'top' as const,
+    verticalAlign: 'middle' as const,
     background: '#fff',
     color: '#000',
+    whiteSpace: 'normal' as const,
+    wordBreak: 'break-word' as const,
   },
   input: {
     width: '100%',
@@ -164,6 +185,19 @@ const printGridStyles = {
     padding: '2px',
     outline: 'none',
     color: '#000',
+  },
+  textarea: {
+    width: '100%',
+    border: 'none',
+    background: 'transparent',
+    fontSize: 10,
+    padding: '2px',
+    outline: 'none',
+    color: '#000',
+    resize: 'none' as const,
+    overflow: 'hidden' as const,
+    whiteSpace: 'pre-wrap' as const,
+    lineHeight: 1.2,
   },
 };
 
@@ -195,10 +229,14 @@ function groupTerminalsForPrintGrid(
 }
 
 export default function WiringEditorV2Client(props: Props) {
-  const { projectId, subCenterId, canWrite, initialState } = props;
+  const { projectId, subCenterId, projectCode, subCenterCode, canWrite, initialState } = props;
   const [tab, setTab] = useState<Tab>('editor');
+  const [leftTab, setLeftTab] = useState<LeftPanelTab>('pages');
+  const [rightTab, setRightTab] = useState<RightPanelTab>('inspector');
   const [state, setState] = useState<WiringV2State>(initialState);
   const [selectedPageId, setSelectedPageId] = useState<string>(() => initialState.pageOrder[0] ?? initialState.pages[0]?.id ?? '');
+  const [selectedTerminal, setSelectedTerminal] = useState<{ pageId: string; terminalCode: string } | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
 
   // Workbook is edited client-side and saved explicitly.
   const [workbookRows, setWorkbookRows] = useState<CanonicalRow[]>(() => props.canonicalRows.map((r) => ({ ...r })));
@@ -215,6 +253,13 @@ export default function WiringEditorV2Client(props: Props) {
   const [newModuleName, setNewModuleName] = useState('');
   const [newTemplateId, setNewTemplateId] = useState<ModuleTemplateId>('DI-16');
 
+  // Zoom controls
+  const [zoomMode, setZoomMode] = useState<'fit' | 'manual'>('fit');
+  const [zoomScale, setZoomScale] = useState(1);
+  const canvasWrapRef = useRef<HTMLDivElement | null>(null);
+  const canvasContentRef = useRef<HTMLDivElement | null>(null);
+  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+
   const pagesById = useMemo(() => {
     const map = new Map(state.pages.map((p) => [p.id, p] as const));
     return map;
@@ -230,6 +275,41 @@ export default function WiringEditorV2Client(props: Props) {
   useEffect(() => {
     if (!selectedPageId && orderedPages.length > 0) setSelectedPageId(orderedPages[0].id);
   }, [selectedPageId, orderedPages]);
+
+  useEffect(() => {
+    if (selectedTerminal && selectedTerminal.pageId !== selectedPageId) {
+      setSelectedTerminal(null);
+    }
+  }, [selectedPageId, selectedTerminal]);
+
+  useEffect(() => {
+    if (!canvasContentRef.current || tab !== 'editor') return;
+    const handle = requestAnimationFrame(() => {
+      const nodes = canvasContentRef.current?.querySelectorAll('textarea') ?? [];
+      nodes.forEach((node) => autoResizeTextarea(node as HTMLTextAreaElement));
+    });
+    return () => cancelAnimationFrame(handle);
+  }, [selectedPageId, state.terminals, tab]);
+
+  const updateFitScale = useCallback(() => {
+    if (!canvasWrapRef.current || !canvasContentRef.current) return;
+    const wrapWidth = canvasWrapRef.current.clientWidth;
+    const contentWidth = canvasContentRef.current.scrollWidth;
+    if (!wrapWidth || !contentWidth) return;
+    const nextScale = Math.min(1, wrapWidth / contentWidth);
+    if (Number.isFinite(nextScale)) {
+      setZoomScale(nextScale);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (zoomMode !== 'fit') return;
+    updateFitScale();
+    const observer = new ResizeObserver(() => updateFitScale());
+    if (canvasWrapRef.current) observer.observe(canvasWrapRef.current);
+    if (canvasContentRef.current) observer.observe(canvasContentRef.current);
+    return () => observer.disconnect();
+  }, [zoomMode, updateFitScale, selectedPageId, tab]);
 
   async function addModulePage() {
     if (!canWrite) return;
@@ -260,18 +340,25 @@ export default function WiringEditorV2Client(props: Props) {
   }
 
   async function apiPatch(body: Record<string, unknown>) {
-    const res = await fetch('/api/wiring-diagrams/v2/state', {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ projectId, subCenterId, ...body }),
-    });
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(t || 'Save failed');
+    setSaveStatus('saving');
+    try {
+      const res = await fetch('/api/wiring-diagrams/v2/state', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ projectId, subCenterId, ...body }),
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || 'Save failed');
+      }
+      const json = (await res.json()) as { state: WiringV2State };
+      setState(json.state);
+      setSaveStatus('saved');
+      return json.state;
+    } catch (error) {
+      setSaveStatus('error');
+      throw error;
     }
-    const json = (await res.json()) as { state: WiringV2State };
-    setState(json.state);
-    return json.state;
   }
 
   async function setAutomationServerType(v: string) {
@@ -345,6 +432,17 @@ export default function WiringEditorV2Client(props: Props) {
     const n = idx + delta;
     if (n < 0 || n >= orderedPages.length) return;
     setSelectedPageId(orderedPages[n].id);
+  }
+
+  function focusTerminal(pageId: string, terminalCode: string) {
+    setSelectedPageId(pageId);
+    setSelectedTerminal({ pageId, terminalCode });
+    setRightTab('inspector');
+    const key = keyForTerminal(pageId, terminalCode);
+    const row = rowRefs.current[key];
+    if (row) {
+      row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
   }
 
   // Get point data from canonical rows for the current page (fix for B: data visibility)
@@ -425,6 +523,86 @@ export default function WiringEditorV2Client(props: Props) {
     return pointMap;
   }, [selectedPage, props.canonicalRows, workbookRows]);
 
+  const issues = useMemo<WiringIssue[]>(() => {
+    const collected: WiringIssue[] = [];
+    const allocationIndex = new Map<string, Array<{ pageId: string; terminalCode: string }>>();
+
+    for (const page of state.pages) {
+      const template = getTemplate(page.templateId);
+      for (const terminal of template.terminals) {
+        const key = keyForTerminal(page.id, terminal.terminal_code);
+        const terminalState = state.terminals[key] ?? {};
+        const cable1 = String(terminalState.cable1 ?? '').trim();
+        const cable1Pair = String((terminalState as Record<string, unknown>).cable1Pair ?? '').trim();
+        const destConnector = String((terminalState as Record<string, unknown>).destinationConnector ?? '').trim();
+
+        if (!cable1) {
+          collected.push({
+            id: `${key}:cable1`,
+            pageId: page.id,
+            terminalCode: terminal.terminal_code,
+            field: 'Kaapeli 1',
+            message: 'Missing cable id (Kaapeli 1).',
+          });
+        }
+
+        if (!cable1Pair) {
+          collected.push({
+            id: `${key}:cable1Pair`,
+            pageId: page.id,
+            terminalCode: terminal.terminal_code,
+            field: 'Pari nro',
+            message: 'Missing pair number (Pari nro).',
+          });
+        }
+
+        if (!destConnector) {
+          collected.push({
+            id: `${key}:destinationConnector`,
+            pageId: page.id,
+            terminalCode: terminal.terminal_code,
+            field: 'Liitin',
+            message: 'Missing connector/terminal field.',
+          });
+        }
+
+        if (cable1 && cable1Pair) {
+          const allocKey = `${cable1}::${cable1Pair}`;
+          const list = allocationIndex.get(allocKey) ?? [];
+          list.push({ pageId: page.id, terminalCode: terminal.terminal_code });
+          allocationIndex.set(allocKey, list);
+        }
+      }
+    }
+
+    for (const [allocKey, entries] of allocationIndex.entries()) {
+      if (entries.length < 2) continue;
+      for (const entry of entries) {
+        collected.push({
+          id: `${entry.pageId}:${entry.terminalCode}:duplicate:${allocKey}`,
+          pageId: entry.pageId,
+          terminalCode: entry.terminalCode,
+          field: 'Allocation',
+          message: `Duplicate allocation for ${allocKey}.`,
+        });
+      }
+    }
+
+    return collected;
+  }, [state.pages, state.terminals]);
+
+  const issuesByPage = useMemo(() => {
+    const map = new Map<string, Map<string, WiringIssue[]>>();
+    for (const issue of issues) {
+      const pageMap = map.get(issue.pageId) ?? new Map<string, WiringIssue[]>();
+      const list = pageMap.get(issue.terminalCode) ?? [];
+      list.push(issue);
+      pageMap.set(issue.terminalCode, list);
+      map.set(issue.pageId, pageMap);
+    }
+    return map;
+  }, [issues]);
+
   // Print-grid rendering with proper rowSpan grouping (fix for A: parity)
   function renderGrid() {
     if (!selectedPage) return <div className="muted">No pages.</div>;
@@ -432,16 +610,16 @@ export default function WiringEditorV2Client(props: Props) {
     const terminalGroups = groupTerminalsForPrintGrid(template.terminals);
 
     return (
-      <div style={{ background: '#fff', padding: 16, border: '1px solid #ccc' }}>
-        {/* Page header matching golden reference format */}
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: '#000' }}>
-            {selectedPage.code}_{selectedPage.templateId}
+        <div style={{ background: '#fff', padding: 16, border: '1px solid #ccc' }}>
+          {/* Page header matching golden reference format */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#000' }}>
+              {selectedPage.code}_{selectedPage.templateId}
+            </div>
+            <div style={{ fontSize: 12, color: '#000' }}>
+              {selectedPage.templateId}
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: '#000' }}>
-            {selectedPage.templateId}
-          </div>
-        </div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <button className="btn secondary" onClick={() => nextPage(-1)} disabled={!selectedPage || orderedPages[0]?.id === selectedPage.id}>
@@ -486,6 +664,7 @@ export default function WiringEditorV2Client(props: Props) {
                 const groupRows = Math.max(group.connectorLines.length, 1);
                 const k = keyForTerminal(selectedPage.id, group.terminalCode);
                 const terminalState = state.terminals[k] ?? {};
+                const isSelected = selectedTerminal?.pageId === selectedPage.id && selectedTerminal?.terminalCode === group.terminalCode;
 
                 // Get point data from canonical rows (fix for B: data visibility)
                 // First try the terminal state, then workbook/canonical rows
@@ -494,25 +673,38 @@ export default function WiringEditorV2Client(props: Props) {
                 const deviceDesc = terminalState.description || String(pointData?.point_descr ?? '');
 
                 return group.connectorLines.map((connectorLine, lineIdx) => (
-                  <tr key={`${k}:${lineIdx}`}>
+                  <tr
+                    key={`${k}:${lineIdx}`}
+                    ref={lineIdx === 0 ? (node) => {
+                      rowRefs.current[k] = node;
+                    } : undefined}
+                    style={isSelected ? { background: '#f3f6ff' } : undefined}
+                    onClick={() => focusTerminal(selectedPage.id, group.terminalCode)}
+                  >
                     {/* Cells with rowSpan (only on first row of group) */}
                     {lineIdx === 0 && (
                       <>
                         {/* Tunnus (device tag) - rowSpan */}
                         <td style={printGridStyles.td} rowSpan={groupRows}>
-                          <input
-                            style={printGridStyles.input}
+                          <textarea
+                            style={printGridStyles.textarea}
                             defaultValue={deviceTag}
                             disabled={!canWrite}
+                            rows={1}
+                            onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                            onFocus={(e) => autoResizeTextarea(e.currentTarget)}
                             onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { deviceText: e.currentTarget.value })}
                           />
                         </td>
                         {/* Teksti (description) - rowSpan */}
                         <td style={printGridStyles.td} rowSpan={groupRows}>
-                          <input
-                            style={printGridStyles.input}
+                          <textarea
+                            style={printGridStyles.textarea}
                             defaultValue={deviceDesc}
                             disabled={!canWrite}
+                            rows={1}
+                            onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                            onFocus={(e) => autoResizeTextarea(e.currentTarget)}
                             onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, description: e.currentTarget.value } as WiringV2TerminalRow)}
                           />
                         </td>
@@ -525,10 +717,13 @@ export default function WiringEditorV2Client(props: Props) {
                     {/* Kaapeli 1: Pari nro tai johdin - per row */}
                     <td style={printGridStyles.td}>
                       {lineIdx === 0 && (
-                        <input
-                          style={printGridStyles.input}
+                        <textarea
+                          style={printGridStyles.textarea}
                           defaultValue={(terminalState as Record<string, unknown>).cable1Pair as string ?? ''}
                           disabled={!canWrite}
+                          rows={1}
+                          onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                          onFocus={(e) => autoResizeTextarea(e.currentTarget)}
                           onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, cable1Pair: e.currentTarget.value } as WiringV2TerminalRow)}
                         />
                       )}
@@ -536,10 +731,13 @@ export default function WiringEditorV2Client(props: Props) {
                     {/* Kaapeli 1: Tyyppi koko nro - rowSpan */}
                     {lineIdx === 0 && (
                       <td style={printGridStyles.td} rowSpan={groupRows}>
-                        <input
-                          style={printGridStyles.input}
+                        <textarea
+                          style={printGridStyles.textarea}
                           defaultValue={terminalState.cable1 ?? ''}
                           disabled={!canWrite}
+                          rows={1}
+                          onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                          onFocus={(e) => autoResizeTextarea(e.currentTarget)}
                           onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { cable1: e.currentTarget.value })}
                         />
                       </td>
@@ -547,10 +745,13 @@ export default function WiringEditorV2Client(props: Props) {
                     {/* Välikytkentäpaikka ja liittimet - per row */}
                     <td style={printGridStyles.td}>
                       {lineIdx === 0 && (
-                        <input
-                          style={printGridStyles.input}
+                        <textarea
+                          style={printGridStyles.textarea}
                           defaultValue={(terminalState as Record<string, unknown>).intermediateTerminal as string ?? ''}
                           disabled={!canWrite}
+                          rows={1}
+                          onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                          onFocus={(e) => autoResizeTextarea(e.currentTarget)}
                           onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, intermediateTerminal: e.currentTarget.value } as WiringV2TerminalRow)}
                         />
                       )}
@@ -558,10 +759,13 @@ export default function WiringEditorV2Client(props: Props) {
                     {/* Kaapeli 2: Tyyppi koko nro - rowSpan */}
                     {lineIdx === 0 && (
                       <td style={printGridStyles.td} rowSpan={groupRows}>
-                        <input
-                          style={printGridStyles.input}
+                        <textarea
+                          style={printGridStyles.textarea}
                           defaultValue={terminalState.cable2 ?? ''}
                           disabled={!canWrite}
+                          rows={1}
+                          onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                          onFocus={(e) => autoResizeTextarea(e.currentTarget)}
                           onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { cable2: e.currentTarget.value })}
                         />
                       </td>
@@ -569,10 +773,13 @@ export default function WiringEditorV2Client(props: Props) {
                     {/* Kaapeli 2: Pari nro tai johdin - per row */}
                     <td style={printGridStyles.td}>
                       {lineIdx === 0 && (
-                        <input
-                          style={printGridStyles.input}
+                        <textarea
+                          style={printGridStyles.textarea}
                           defaultValue={(terminalState as Record<string, unknown>).cable2Pair as string ?? ''}
                           disabled={!canWrite}
+                          rows={1}
+                          onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                          onFocus={(e) => autoResizeTextarea(e.currentTarget)}
                           onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, cable2Pair: e.currentTarget.value } as WiringV2TerminalRow)}
                         />
                       )}
@@ -580,10 +787,13 @@ export default function WiringEditorV2Client(props: Props) {
                     {/* Minne johdetaan: Liitin - per row */}
                     <td style={printGridStyles.td}>
                       {lineIdx === 0 && (
-                        <input
-                          style={printGridStyles.input}
+                        <textarea
+                          style={printGridStyles.textarea}
                           defaultValue={(terminalState as Record<string, unknown>).destinationConnector as string ?? ''}
                           disabled={!canWrite}
+                          rows={1}
+                          onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                          onFocus={(e) => autoResizeTextarea(e.currentTarget)}
                           onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, destinationConnector: e.currentTarget.value } as WiringV2TerminalRow)}
                         />
                       )}
@@ -591,10 +801,13 @@ export default function WiringEditorV2Client(props: Props) {
                     {/* Minne johdetaan: Kytkentäpaikka - rowSpan */}
                     {lineIdx === 0 && (
                       <td style={printGridStyles.td} rowSpan={groupRows}>
-                        <input
-                          style={printGridStyles.input}
+                        <textarea
+                          style={printGridStyles.textarea}
                           defaultValue={terminalState.destination ?? ''}
                           disabled={!canWrite}
+                          rows={1}
+                          onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                          onFocus={(e) => autoResizeTextarea(e.currentTarget)}
                           onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { destination: e.currentTarget.value })}
                         />
                       </td>
@@ -637,6 +850,7 @@ export default function WiringEditorV2Client(props: Props) {
 
   async function saveWorkbookPatches(patches: Array<{ rowIndex: number; field: string; value: unknown }>) {
     if (!canWrite) return;
+    setSaveStatus('saving');
     const res = await fetch('/api/wiring-diagrams/v2/workbook', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
@@ -644,11 +858,13 @@ export default function WiringEditorV2Client(props: Props) {
     });
     if (!res.ok) {
       const t = await res.text();
+      setSaveStatus('error');
       throw new Error(t || 'Workbook save failed');
     }
     const json = (await res.json()) as { canonicalRows: CanonicalRow[] };
     setWorkbookRows(json.canonicalRows.map((r) => ({ ...r })));
     setWorkbookDirty(false);
+    setSaveStatus('saved');
   }
 
   function onWorkbookCellPaste(rowIndex: number, colIndex: number, text: string) {
@@ -922,79 +1138,86 @@ export default function WiringEditorV2Client(props: Props) {
     );
   }
 
+  function adjustZoom(delta: number) {
+    setZoomMode('manual');
+    setZoomScale((prev) => {
+      const next = Math.min(2, Math.max(0.4, prev + delta));
+      return Number.isFinite(next) ? next : prev;
+    });
+  }
+
+  function setZoomTo(value: number) {
+    setZoomMode('manual');
+    setZoomScale(Math.min(2, Math.max(0.4, value)));
+  }
+
+  const saveStatusLabel = saveStatus === 'saved' ? 'Saved ✓' : saveStatus === 'saving' ? 'Saving…' : 'Error';
+
   return (
-    <div className="page">
-      <div className="row spaceBetween" style={{ gap: 12 }}>
-        <div>
-          <h1>WIRING_DIAGRAMS</h1>
-          <div className="muted">Kytkentäkuvaeditori</div>
-        </div>
-        <Link className="btn secondary" href={`/app/projects/${projectId}/centers/${subCenterId}/documents`}>
-          Back to documents
-        </Link>
-      </div>
-
-      {/* Import changes pending banner (per docs/04_REVISION_WORKFLOW.md) */}
-      {importSession && (
-        <div className="card" style={{ marginBottom: 12, background: '#fff3cd', border: '1px solid #ffc107' }}>
-          <div className="row spaceBetween" style={{ gap: 12 }}>
-            <div>
-              <div className="h2" style={{ color: '#856404' }}>⚠️ Import changes pending</div>
-              <div className="muted" style={{ color: '#856404' }}>
-                File: {importSession.filename} — {importSession.preview.added} added, {importSession.preview.modified} modified
+    <div className="page" style={{ maxWidth: 'none', width: '100%', minHeight: 'calc(100vh - 48px)', overflow: 'hidden' }}>
+      <DocumentWorkspaceShell
+        topBar={
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+            <div className="card" style={{ padding: 12, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'grid', gap: 4 }}>
+                <div className="muted small">
+                  Projects / <span className="mono">{projectCode}</span> / Center <span className="mono">{subCenterCode}</span>
+                </div>
+                <div className="row" style={{ gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div className="h2" style={{ margin: 0 }}>Kytkentäkuvat</div>
+                  <div className="muted small">Revision: —</div>
+                  <div className="muted small">•</div>
+                  <div className="small">{saveStatusLabel}</div>
+                </div>
               </div>
-              <div className="muted small" style={{ marginTop: 4 }}>
-                Accepting will create a new revision (rev bump) per revision workflow.
+              <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                {renderImportExportToolbar()}
+                <Link className="btn secondary" href={`/app/projects/${projectId}/centers/${subCenterId}/imports`}>
+                  Audit
+                </Link>
+                <button
+                  className="btn secondary"
+                  type="button"
+                  onClick={() => setRightTab('issues')}
+                >
+                  Issues: {issues.length}
+                </button>
+                <Link className="btn secondary" href={`/app/projects/${projectId}/centers/${subCenterId}/documents`}>
+                  Back to documents
+                </Link>
               </div>
             </div>
-            <div className="row" style={{ gap: 8 }}>
-              <button className="btn" onClick={handleAcceptImport} disabled={importing}>
-                {importing ? 'Processing...' : 'Accept & Create Revision'}
-              </button>
-              <button className="btn secondary" onClick={handleDismissImport} disabled={importing}>
-                Dismiss
-              </button>
-            </div>
+
+            {/* Import changes pending banner (per docs/04_REVISION_WORKFLOW.md) */}
+            {importSession && (
+              <div className="card" style={{ background: '#fff3cd', border: '1px solid #ffc107' }}>
+                <div className="row spaceBetween" style={{ gap: 12, flexWrap: 'wrap' }}>
+                  <div>
+                    <div className="h2" style={{ color: '#856404' }}>⚠️ Import changes pending</div>
+                    <div className="muted" style={{ color: '#856404' }}>
+                      File: {importSession.filename} — {importSession.preview.added} added, {importSession.preview.modified} modified
+                    </div>
+                    <div className="muted small" style={{ marginTop: 4 }}>
+                      Accepting will create a new revision (rev bump) per revision workflow.
+                    </div>
+                  </div>
+                  <div className="row" style={{ gap: 8 }}>
+                    <button className="btn" onClick={handleAcceptImport} disabled={importing}>
+                      {importing ? 'Processing...' : 'Accept & Create Revision'}
+                    </button>
+                    <button className="btn secondary" onClick={handleDismissImport} disabled={importing}>
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
-
-      <div className="card" style={{ marginBottom: 12 }}>
-        <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
-          <div className="row" style={{ gap: 8, alignItems: 'center' }}>
-            <div className="muted small">Automation server type</div>
-            <select
-              className="select"
-              disabled={!canWrite}
-              value={state.automationServerType ?? ''}
-              onChange={(e) => setAutomationServerType(e.currentTarget.value)}
-            >
-              <option value="">(none)</option>
-              <option value="AS-P">AS-P</option>
-            </select>
-          </div>
-
-          <div className="row" style={{ gap: 8 }}>
-            <button className={tab === 'editor' ? 'btn' : 'btn secondary'} onClick={() => setTab('editor')}>
-              Kytkentäkuva
-            </button>
-            <button className={tab === 'workbook' ? 'btn' : 'btn secondary'} onClick={() => setTab('workbook')}>
-              Työkirja
-            </button>
-          </div>
-
-          {/* Import/Export in toolbar (both tabs per docs/03_IMPORT_EXPORT.md) */}
-          {renderImportExportToolbar()}
-        </div>
-      </div>
-
-      {tab === 'editor' ? (
-        <div className="row" style={{ gap: 12, alignItems: 'flex-start' }}>
-          {/* LEFT: Pages tree with Add module in header (per FINAL-S2) */}
-          <div className="card" style={{ width: 300, padding: 12 }}>
-            {/* Add module controls at TOP of card (per FINAL-S2) */}
-            <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #eee' }}>
-              <div className="h2" style={{ marginBottom: 8 }}>Add Module</div>
+        }
+        leftPanel={
+          <>
+            <div style={{ padding: 12, borderBottom: '1px solid #eee' }}>
+              <div className="h2" style={{ marginBottom: 8 }}>Add module</div>
               <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
                 <input
                   className="input"
@@ -1002,67 +1225,221 @@ export default function WiringEditorV2Client(props: Props) {
                   value={newModuleName}
                   disabled={!canWrite}
                   onChange={(e) => setNewModuleName(e.currentTarget.value)}
-                  style={{ flex: 1, minWidth: 100 }}
+                  style={{ flex: 1, minWidth: 120 }}
                 />
                 <select
                   className="select"
                   value={newTemplateId}
                   disabled={!canWrite}
                   onChange={(e) => setNewTemplateId(e.currentTarget.value as ModuleTemplateId)}
-                  style={{ width: 90 }}
+                  style={{ width: 96 }}
                 >
                   {TEMPLATE_IDS.map((tid) => (
                     <option key={tid} value={tid}>{tid}</option>
                   ))}
                 </select>
                 <button className="btn" disabled={!canWrite || !newModuleName.trim()} onClick={addModulePage}>
-                  +
+                  Add
+                </button>
+              </div>
+              <div className="row" style={{ gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                <button className={leftTab === 'pages' ? 'btn' : 'btn secondary'} onClick={() => setLeftTab('pages')}>
+                  Pages
+                </button>
+                <button className={leftTab === 'modules' ? 'btn' : 'btn secondary'} onClick={() => setLeftTab('modules')}>
+                  Modules
+                </button>
+                <button className={leftTab === 'devices' ? 'btn' : 'btn secondary'} onClick={() => setLeftTab('devices')}>
+                  Devices
                 </button>
               </div>
             </div>
-
-            {/* Pages list (flat, no folders per FINAL-S1) */}
-            <div className="h2" style={{ marginBottom: 8 }}>Pages</div>
-            <div className="muted small" style={{ marginBottom: 8 }}>
-              Drag & drop to reorder (codes update on reorder)
+            <div className="workspacePanelBody" style={{ padding: 12 }}>
+              {leftTab === 'pages' ? (
+                <>
+                  <div className="h2" style={{ marginBottom: 8 }}>Pages</div>
+                  <div className="muted small" style={{ marginBottom: 8 }}>
+                    Drag &amp; drop to reorder (codes update on reorder)
+                  </div>
+                  <ul className="list" style={{ overflowY: 'auto' }}>
+                    {orderedPages.map((p, idx) => {
+                      const isLocked = Boolean(p.locked);
+                      const isSelected = p.id === selectedPage?.id;
+                      return (
+                        <li
+                          key={p.id}
+                          className="listItem"
+                          draggable={canWrite && !isLocked}
+                          onDragStart={(e) => onDragStart(e, idx)}
+                          onDrop={(e) => onDrop(e, idx)}
+                          onDragOver={onDragOver}
+                          style={{ cursor: canWrite && !isLocked ? 'grab' : 'default' }}
+                        >
+                          <button
+                            className={isSelected ? 'btn' : 'btn secondary'}
+                            style={{ width: '100%', justifyContent: 'space-between', fontSize: 11 }}
+                            onClick={() => setSelectedPageId(p.id)}
+                            type="button"
+                          >
+                            <span>
+                              <span className="mono">{p.code}</span> {p.title}
+                            </span>
+                            {isLocked && <span className="muted small">🔒</span>}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              ) : (
+                <div className="muted small">Not implemented yet.</div>
+              )}
             </div>
-            <ul className="list" style={{ maxHeight: 400, overflowY: 'auto' }}>
-              {orderedPages.map((p, idx) => {
-                const isLocked = Boolean(p.locked);
-                const isSelected = p.id === selectedPage?.id;
-                return (
-                  <li
-                    key={p.id}
-                    className="listItem"
-                    draggable={canWrite && !isLocked}
-                    onDragStart={(e) => onDragStart(e, idx)}
-                    onDrop={(e) => onDrop(e, idx)}
-                    onDragOver={onDragOver}
-                    style={{ cursor: canWrite && !isLocked ? 'grab' : 'default' }}
+          </>
+        }
+        centerPanel={
+          <>
+            <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="row" style={{ gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="muted small">Automation server type</div>
+                <select
+                  className="select"
+                  disabled={!canWrite}
+                  value={state.automationServerType ?? ''}
+                  onChange={(e) => setAutomationServerType(e.currentTarget.value)}
+                >
+                  <option value="">(none)</option>
+                  <option value="AS-P">AS-P</option>
+                </select>
+              </div>
+              <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                <button className={tab === 'editor' ? 'btn' : 'btn secondary'} onClick={() => setTab('editor')}>
+                  Kytkentäkuva
+                </button>
+                <button className={tab === 'workbook' ? 'btn' : 'btn secondary'} onClick={() => setTab('workbook')}>
+                  Työkirja
+                </button>
+              </div>
+              <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+                <button className="btn secondary" type="button" onClick={() => adjustZoom(-0.1)}>
+                  -
+                </button>
+                <button className="btn secondary" type="button" onClick={() => setZoomTo(1)}>
+                  100%
+                </button>
+                <button className="btn secondary" type="button" onClick={() => adjustZoom(0.1)}>
+                  +
+                </button>
+                <button
+                  className={zoomMode === 'fit' ? 'btn' : 'btn secondary'}
+                  type="button"
+                  onClick={() => setZoomMode('fit')}
+                >
+                  Fit width
+                </button>
+              </div>
+            </div>
+            <div className="workspacePanelBody" style={{ padding: 12, background: '#f8f9fb' }}>
+              {tab === 'editor' ? (
+                <div
+                  ref={canvasWrapRef}
+                  style={{ width: '100%', height: '100%', overflow: 'auto' }}
+                >
+                  <div
+                    ref={canvasContentRef}
+                    style={{
+                      transform: `scale(${zoomScale})`,
+                      transformOrigin: 'top left',
+                      width: 'max-content',
+                    }}
                   >
-                    <button
-                      className={isSelected ? 'btn' : 'btn secondary'}
-                      style={{ width: '100%', justifyContent: 'space-between', fontSize: 11 }}
-                      onClick={() => setSelectedPageId(p.id)}
-                      type="button"
-                    >
-                      <span>
-                        <span className="mono">{p.code}</span> {p.title}
-                      </span>
-                      {isLocked && <span className="muted small">🔒</span>}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
-          {/* RIGHT: A4 wiring diagram (per FINAL-S2) */}
-          <div style={{ flex: 1 }}>{renderGrid()}</div>
-        </div>
-      ) : (
-        renderWorkbook()
-      )}
+                    {renderGrid()}
+                  </div>
+                </div>
+              ) : (
+                renderWorkbook()
+              )}
+            </div>
+          </>
+        }
+        rightPanel={
+          <>
+            <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className={rightTab === 'inspector' ? 'btn' : 'btn secondary'} onClick={() => setRightTab('inspector')}>
+                Inspector
+              </button>
+              <button className={rightTab === 'issues' ? 'btn' : 'btn secondary'} onClick={() => setRightTab('issues')}>
+                Issues ({issues.length})
+              </button>
+            </div>
+            <div className="workspacePanelBody" style={{ padding: 12 }}>
+              {rightTab === 'inspector' ? (
+                <>
+                  <div className="h2" style={{ marginBottom: 8 }}>Selected</div>
+                  {selectedTerminal ? (
+                    <div style={{ display: 'grid', gap: 6 }}>
+                      <div>
+                        Page: <span className="mono">{selectedPage?.code}</span> {selectedPage?.title}
+                      </div>
+                      <div>
+                        Terminal: <span className="mono">{selectedTerminal.terminalCode}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="muted small">Select a row to inspect details.</div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="h2" style={{ marginBottom: 8 }}>Issues</div>
+                  {issues.length === 0 ? (
+                    <div className="muted small">No issues found for this document.</div>
+                  ) : (
+                    Array.from(issuesByPage.entries()).map(([pageId, terminalsMap]) => {
+                      const page = state.pages.find((p) => p.id === pageId);
+                      return (
+                        <div key={pageId} style={{ marginBottom: 12 }}>
+                          <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                            Page {page?.code} {page?.title}
+                          </div>
+                          {Array.from(terminalsMap.entries()).map(([terminalCode, terminalIssues]) => (
+                            <div key={terminalCode} style={{ marginLeft: 12, marginBottom: 6 }}>
+                              <div style={{ fontWeight: 600, marginBottom: 4 }}>Object {terminalCode}</div>
+                              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                                {terminalIssues.map((issue) => (
+                                  <li key={issue.id} style={{ marginBottom: 4 }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        focusTerminal(issue.pageId, issue.terminalCode);
+                                        setRightTab('inspector');
+                                      }}
+                                      style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        padding: 0,
+                                        color: 'inherit',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                      }}
+                                    >
+                                      {issue.field}: {issue.message}
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })
+                  )}
+                </>
+              )}
+            </div>
+          </>
+        }
+      />
     </div>
   );
 }

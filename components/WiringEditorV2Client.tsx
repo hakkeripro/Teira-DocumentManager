@@ -49,6 +49,14 @@ const WORKBOOK_COLUMNS: { key: string; label: string }[] = [
 
 
 const TEMPLATE_IDS = Object.keys(MODULE_TEMPLATES) as ModuleTemplateId[];
+const A4_BASE_WIDTH = 1200;
+const CENTER_PANE_PADDING = 24;
+const ZOOM_MIN = 0.8;
+const ZOOM_MAX = 2;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
 
 function safeKey(s: string): string {
   return s
@@ -199,6 +207,10 @@ export default function WiringEditorV2Client(props: Props) {
   const [tab, setTab] = useState<Tab>('editor');
   const [state, setState] = useState<WiringV2State>(initialState);
   const [selectedPageId, setSelectedPageId] = useState<string>(() => initialState.pageOrder[0] ?? initialState.pages[0]?.id ?? '');
+  const [zoomMode, setZoomMode] = useState<'fit' | 'custom'>('fit');
+  const [scale, setScale] = useState(1);
+  const [pagesDrawerOpen, setPagesDrawerOpen] = useState(false);
+  const [inspectorDrawerOpen, setInspectorDrawerOpen] = useState(false);
 
   // Workbook is edited client-side and saved explicitly.
   const [workbookRows, setWorkbookRows] = useState<CanonicalRow[]>(() => props.canonicalRows.map((r) => ({ ...r })));
@@ -210,6 +222,8 @@ export default function WiringEditorV2Client(props: Props) {
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const importFileRef = useRef<HTMLInputElement | null>(null);
+  const workspaceRootRef = useRef<HTMLDivElement | null>(null);
+  const centerPaneRef = useRef<HTMLDivElement | null>(null);
 
   // Add module form state
   const [newModuleName, setNewModuleName] = useState('');
@@ -230,6 +244,51 @@ export default function WiringEditorV2Client(props: Props) {
   useEffect(() => {
     if (!selectedPageId && orderedPages.length > 0) setSelectedPageId(orderedPages[0].id);
   }, [selectedPageId, orderedPages]);
+
+  useEffect(() => {
+    const root = workspaceRootRef.current;
+    const page = root?.closest<HTMLElement>('.page');
+    if (!page) return;
+    const prev = {
+      maxWidth: page.style.maxWidth,
+      width: page.style.width,
+      minWidth: page.style.minWidth,
+    };
+    page.style.maxWidth = 'none';
+    page.style.width = '100%';
+    page.style.minWidth = '0';
+    return () => {
+      page.style.maxWidth = prev.maxWidth;
+      page.style.width = prev.width;
+      page.style.minWidth = prev.minWidth;
+    };
+  }, []);
+
+  const computeFitScale = useCallback(() => {
+    const el = centerPaneRef.current;
+    if (!el) return;
+    const availableWidth = el.clientWidth - CENTER_PANE_PADDING * 2;
+    if (availableWidth <= 0) return;
+    const nextScale = clamp(availableWidth / A4_BASE_WIDTH, ZOOM_MIN, ZOOM_MAX);
+    setScale(nextScale);
+  }, []);
+
+  useEffect(() => {
+    if (zoomMode !== 'fit') return;
+    const el = centerPaneRef.current;
+    if (!el) return;
+    let raf = 0;
+    const observer = new ResizeObserver(() => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => computeFitScale());
+    });
+    observer.observe(el);
+    computeFitScale();
+    return () => {
+      observer.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [zoomMode, computeFitScale]);
 
   async function addModulePage() {
     if (!canWrite) return;
@@ -635,6 +694,115 @@ export default function WiringEditorV2Client(props: Props) {
     );
   }
 
+  const zoomPercent = Math.round(scale * 100);
+  const setCustomZoom = (nextScale: number) => {
+    setZoomMode('custom');
+    setScale(clamp(nextScale, ZOOM_MIN, ZOOM_MAX));
+  };
+
+  const pagesPanel = (
+    <div className="card wiring-panel">
+      {/* Add module controls at TOP of card (per FINAL-S2) */}
+      <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #eee' }}>
+        <div className="h2" style={{ marginBottom: 8 }}>Add Module</div>
+        <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+          <input
+            className="input"
+            placeholder="Module name"
+            value={newModuleName}
+            disabled={!canWrite}
+            onChange={(e) => setNewModuleName(e.currentTarget.value)}
+            style={{ flex: 1, minWidth: 100 }}
+          />
+          <select
+            className="select"
+            value={newTemplateId}
+            disabled={!canWrite}
+            onChange={(e) => setNewTemplateId(e.currentTarget.value as ModuleTemplateId)}
+            style={{ width: 90 }}
+          >
+            {TEMPLATE_IDS.map((tid) => (
+              <option key={tid} value={tid}>{tid}</option>
+            ))}
+          </select>
+          <button className="btn" disabled={!canWrite || !newModuleName.trim()} onClick={addModulePage}>
+            +
+          </button>
+        </div>
+      </div>
+
+      {/* Pages list (flat, no folders per FINAL-S1) */}
+      <div className="h2" style={{ marginBottom: 8 }}>Pages</div>
+      <div className="muted small" style={{ marginBottom: 8 }}>
+        Drag & drop to reorder (codes update on reorder)
+      </div>
+      <ul className="list wiring-panel-body">
+        {orderedPages.map((p, idx) => {
+          const isLocked = Boolean(p.locked);
+          const isSelected = p.id === selectedPage?.id;
+          return (
+            <li
+              key={p.id}
+              className="listItem"
+              draggable={canWrite && !isLocked}
+              onDragStart={(e) => onDragStart(e, idx)}
+              onDrop={(e) => onDrop(e, idx)}
+              onDragOver={onDragOver}
+              style={{ cursor: canWrite && !isLocked ? 'grab' : 'default' }}
+            >
+              <button
+                className={isSelected ? 'btn' : 'btn secondary'}
+                style={{ width: '100%', justifyContent: 'space-between', fontSize: 11 }}
+                onClick={() => setSelectedPageId(p.id)}
+                type="button"
+              >
+                <span>
+                  <span className="mono">{p.code}</span> {p.title}
+                </span>
+                {isLocked && <span className="muted small">🔒</span>}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+
+  const inspectorPanel = (
+    <div className="card wiring-panel">
+      <div className="h2" style={{ marginBottom: 8 }}>Inspector</div>
+      <div className="muted small" style={{ marginBottom: 12 }}>
+        {selectedPage ? (
+          <>
+            <div><span className="mono">{selectedPage.code}</span> {selectedPage.title}</div>
+            <div className="small">Template: <span className="mono">{selectedPage.templateId}</span></div>
+          </>
+        ) : (
+          <span>No page selected.</span>
+        )}
+      </div>
+      <div className="h2" style={{ marginBottom: 8 }}>Zoom</div>
+      <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+        <button className="btn secondary" type="button" onClick={() => setCustomZoom(scale - 0.1)}>
+          −
+        </button>
+        <div className="mono" style={{ minWidth: 56, textAlign: 'center' }}>
+          {zoomPercent}%
+        </div>
+        <button className="btn secondary" type="button" onClick={() => setCustomZoom(scale + 0.1)}>
+          +
+        </button>
+        <button
+          className={zoomMode === 'fit' ? 'btn' : 'btn secondary'}
+          type="button"
+          onClick={() => setZoomMode('fit')}
+        >
+          Fit width
+        </button>
+      </div>
+    </div>
+  );
+
   async function saveWorkbookPatches(patches: Array<{ rowIndex: number; field: string; value: unknown }>) {
     if (!canWrite) return;
     const res = await fetch('/api/wiring-diagrams/v2/workbook', {
@@ -923,7 +1091,7 @@ export default function WiringEditorV2Client(props: Props) {
   }
 
   return (
-    <div className="page">
+    <div className="wiring-workspace" ref={workspaceRootRef}>
       <div className="row spaceBetween" style={{ gap: 12 }}>
         <div>
           <h1>WIRING_DIAGRAMS</h1>
@@ -981,6 +1149,20 @@ export default function WiringEditorV2Client(props: Props) {
             <button className={tab === 'workbook' ? 'btn' : 'btn secondary'} onClick={() => setTab('workbook')}>
               Työkirja
             </button>
+            <button
+              className="btn secondary wiring-pages-toggle"
+              type="button"
+              onClick={() => setPagesDrawerOpen(true)}
+            >
+              Pages
+            </button>
+            <button
+              className="btn secondary wiring-inspector-toggle"
+              type="button"
+              onClick={() => setInspectorDrawerOpen(true)}
+            >
+              Inspector
+            </button>
           </div>
 
           {/* Import/Export in toolbar (both tabs per docs/03_IMPORT_EXPORT.md) */}
@@ -989,85 +1171,62 @@ export default function WiringEditorV2Client(props: Props) {
       </div>
 
       {tab === 'editor' ? (
-        <div
-          className="row"
-          style={{
-            gap: 12,
-            alignItems: 'flex-start',
-            flexWrap: 'nowrap',
-            overflowX: 'auto',
-          }}
-        >
-          {/* LEFT: Pages tree with Add module in header (per FINAL-S2) */}
-          <div className="card" style={{ width: 300, padding: 12 }}>
-            {/* Add module controls at TOP of card (per FINAL-S2) */}
-            <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #eee' }}>
-              <div className="h2" style={{ marginBottom: 8 }}>Add Module</div>
-              <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-                <input
-                  className="input"
-                  placeholder="Module name"
-                  value={newModuleName}
-                  disabled={!canWrite}
-                  onChange={(e) => setNewModuleName(e.currentTarget.value)}
-                  style={{ flex: 1, minWidth: 100 }}
-                />
-                <select
-                  className="select"
-                  value={newTemplateId}
-                  disabled={!canWrite}
-                  onChange={(e) => setNewTemplateId(e.currentTarget.value as ModuleTemplateId)}
-                  style={{ width: 90 }}
-                >
-                  {TEMPLATE_IDS.map((tid) => (
-                    <option key={tid} value={tid}>{tid}</option>
-                  ))}
-                </select>
-                <button className="btn" disabled={!canWrite || !newModuleName.trim()} onClick={addModulePage}>
-                  +
-                </button>
+        <>
+          <div className="wiring-workspace__grid">
+            {/* LEFT: Pages tree with Add module in header (per FINAL-S2) */}
+            <div className="wiring-workspace__column wiring-workspace__left">
+              {pagesPanel}
+            </div>
+
+            {/* CENTER: A4 wiring diagram (per FINAL-S2) */}
+            <div className="wiring-workspace__column wiring-workspace__center" ref={centerPaneRef}>
+              <div className="wiring-canvas-scroll" style={{ padding: CENTER_PANE_PADDING }}>
+                <div className="wiring-canvas-frame">
+                  <div
+                    className="wiring-canvas"
+                    style={{
+                      width: A4_BASE_WIDTH,
+                      transform: `scale(${scale})`,
+                    }}
+                  >
+                    {renderGrid()}
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Pages list (flat, no folders per FINAL-S1) */}
-            <div className="h2" style={{ marginBottom: 8 }}>Pages</div>
-            <div className="muted small" style={{ marginBottom: 8 }}>
-              Drag & drop to reorder (codes update on reorder)
+            {/* RIGHT: Inspector */}
+            <div className="wiring-workspace__column wiring-workspace__right">
+              {inspectorPanel}
             </div>
-            <ul className="list" style={{ maxHeight: 400, overflowY: 'auto' }}>
-              {orderedPages.map((p, idx) => {
-                const isLocked = Boolean(p.locked);
-                const isSelected = p.id === selectedPage?.id;
-                return (
-                  <li
-                    key={p.id}
-                    className="listItem"
-                    draggable={canWrite && !isLocked}
-                    onDragStart={(e) => onDragStart(e, idx)}
-                    onDrop={(e) => onDrop(e, idx)}
-                    onDragOver={onDragOver}
-                    style={{ cursor: canWrite && !isLocked ? 'grab' : 'default' }}
-                  >
-                    <button
-                      className={isSelected ? 'btn' : 'btn secondary'}
-                      style={{ width: '100%', justifyContent: 'space-between', fontSize: 11 }}
-                      onClick={() => setSelectedPageId(p.id)}
-                      type="button"
-                    >
-                      <span>
-                        <span className="mono">{p.code}</span> {p.title}
-                      </span>
-                      {isLocked && <span className="muted small">🔒</span>}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
           </div>
 
-          {/* RIGHT: A4 wiring diagram (per FINAL-S2) */}
-          <div style={{ flex: 1 }}>{renderGrid()}</div>
-        </div>
+          <div
+            className={`wiring-drawer-overlay ${pagesDrawerOpen || inspectorDrawerOpen ? 'wiring-drawer-overlay--open' : ''}`}
+            onClick={() => {
+              setPagesDrawerOpen(false);
+              setInspectorDrawerOpen(false);
+            }}
+          />
+          <div className={`wiring-drawer wiring-drawer--left ${pagesDrawerOpen ? 'wiring-drawer--open' : ''}`}>
+            <div className="row spaceBetween" style={{ marginBottom: 12 }}>
+              <div className="h2">Pages</div>
+              <button className="btn secondary" type="button" onClick={() => setPagesDrawerOpen(false)}>
+                Close
+              </button>
+            </div>
+            {pagesPanel}
+          </div>
+          <div className={`wiring-drawer wiring-drawer--right ${inspectorDrawerOpen ? 'wiring-drawer--open' : ''}`}>
+            <div className="row spaceBetween" style={{ marginBottom: 12 }}>
+              <div className="h2">Inspector</div>
+              <button className="btn secondary" type="button" onClick={() => setInspectorDrawerOpen(false)}>
+                Close
+              </button>
+            </div>
+            {inspectorPanel}
+          </div>
+        </>
       ) : (
         renderWorkbook()
       )}

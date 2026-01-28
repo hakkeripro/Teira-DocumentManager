@@ -114,6 +114,11 @@ Kun terminal_code:lla on useita connector_lines:
 - Import ja Export -toiminnot ovat käytettävissä sekä **Kytkentäkuva**-tabissa että **Työkirja**-tabissa.
 - Vain WIRING_DIAGRAMS tarvitsee XML exportin (muissa dokumenteissa export = copy/paste taulukosta).
 
+# Responsive rules
+- Desktop: 3-paneeli, skaalaus näytön koon mukaan
+- Tablet: inspector drawer
+- Mobile: pages+inspector drawer + global nav drawer
+
 ## Kansi ja revisiot
 - Publish-putki tuottaa kansisivun + revisiotaulukon minimitasolla.
 - Publish-PDF:n tulee vastata editorin print-grid -näkymää (editor == tuloste).

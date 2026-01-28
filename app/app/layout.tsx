@@ -11,8 +11,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="shell">
+      <input id="global-nav-toggle" className="global-nav-toggle" type="checkbox" />
       <Sidebar actor={actor} />
-      <main className="main">{children}</main>
+      <label className="global-nav-overlay" htmlFor="global-nav-toggle" aria-hidden="true" />
+      <main className="main">
+        <div className="global-topbar">
+          <label className="btn secondary global-nav-button" htmlFor="global-nav-toggle">
+            ☰ Menu
+          </label>
+        </div>
+        {children}
+      </main>
     </div>
   );
 }

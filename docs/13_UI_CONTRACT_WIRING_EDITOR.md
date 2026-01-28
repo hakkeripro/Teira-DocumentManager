@@ -119,6 +119,13 @@ Kun terminal_code:lla on useita connector_lines:
 - Tablet: inspector drawer
 - Mobile: pages+inspector drawer + global nav drawer
 
+## Responsive sizing notes (v2)
+- Wiring workspace columns (desktop): Pages `clamp(220px, 16vw, 300px)`, Center `minmax(0, 1fr)`, Inspector `clamp(260px, 18vw, 340px)`.
+- 1280px+: 3-paneeli (Pages + Canvas + Inspector).
+- 768–1279: 2-paneeli (Pages + Canvas), Inspector drawer.
+- <768: Canvas only, Pages + Inspector drawers.
+- Wiring canvas default zoom = **Fit width**, recomputed on resize and panel width changes.
+
 ## Kansi ja revisiot
 - Publish-putki tuottaa kansisivun + revisiotaulukon minimitasolla.
 - Publish-PDF:n tulee vastata editorin print-grid -näkymää (editor == tuloste).

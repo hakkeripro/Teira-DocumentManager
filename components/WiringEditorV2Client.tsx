@@ -15,6 +15,7 @@ type Props = {
 };
 
 type Tab = 'editor' | 'workbook';
+type ZoomMode = 'fitWidth' | 'fitPage' | 'custom';
 
 /** Cached import session for accept flow (no re-select needed per Sprint 1b) */
 type ImportSession = {
@@ -50,7 +51,7 @@ const WORKBOOK_COLUMNS: { key: string; label: string }[] = [
 
 const TEMPLATE_IDS = Object.keys(MODULE_TEMPLATES) as ModuleTemplateId[];
 const A4_BASE_WIDTH = 1200;
-const CENTER_PANE_PADDING = 24;
+const CENTER_PANE_PADDING = 12;
 const ZOOM_MIN = 0.8;
 const ZOOM_MAX = 2;
 
@@ -207,7 +208,7 @@ export default function WiringEditorV2Client(props: Props) {
   const [tab, setTab] = useState<Tab>('editor');
   const [state, setState] = useState<WiringV2State>(initialState);
   const [selectedPageId, setSelectedPageId] = useState<string>(() => initialState.pageOrder[0] ?? initialState.pages[0]?.id ?? '');
-  const [zoomMode, setZoomMode] = useState<'fit' | 'custom'>('fit');
+  const [zoomMode, setZoomMode] = useState<ZoomMode>('fitWidth');
   const [scale, setScale] = useState(1);
   const [pagesDrawerOpen, setPagesDrawerOpen] = useState(false);
   const [inspectorDrawerOpen, setInspectorDrawerOpen] = useState(false);
@@ -224,6 +225,7 @@ export default function WiringEditorV2Client(props: Props) {
   const importFileRef = useRef<HTMLInputElement | null>(null);
   const workspaceRootRef = useRef<HTMLDivElement | null>(null);
   const centerPaneRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
 
   // Add module form state
   const [newModuleName, setNewModuleName] = useState('');
@@ -264,29 +266,53 @@ export default function WiringEditorV2Client(props: Props) {
     };
   }, []);
 
-  const computeFitScale = useCallback(() => {
+  const computeFitScale = useCallback((mode: ZoomMode) => {
     const el = centerPaneRef.current;
+    const canvas = canvasRef.current;
     if (!el) return;
     const availableWidth = el.clientWidth - CENTER_PANE_PADDING * 2;
+    const availableHeight = el.clientHeight - CENTER_PANE_PADDING * 2;
     if (availableWidth <= 0) return;
-    const nextScale = clamp(availableWidth / A4_BASE_WIDTH, ZOOM_MIN, ZOOM_MAX);
-    setScale(nextScale);
+    let nextScale = availableWidth / A4_BASE_WIDTH;
+    if (mode === 'fitPage' && canvas && availableHeight > 0) {
+      const canvasHeight = canvas.scrollHeight || canvas.clientHeight;
+      if (canvasHeight > 0) {
+        nextScale = Math.min(nextScale, availableHeight / canvasHeight);
+      }
+    }
+    setScale(clamp(nextScale, ZOOM_MIN, ZOOM_MAX));
   }, []);
 
   useEffect(() => {
-    if (zoomMode !== 'fit') return;
+    if (zoomMode === 'custom') return;
     const el = centerPaneRef.current;
+    const canvas = canvasRef.current;
     if (!el) return;
     let raf = 0;
     const observer = new ResizeObserver(() => {
       if (raf) cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => computeFitScale());
+      raf = requestAnimationFrame(() => computeFitScale(zoomMode));
     });
     observer.observe(el);
-    computeFitScale();
+    if (canvas) observer.observe(canvas);
+    computeFitScale(zoomMode);
     return () => {
       observer.disconnect();
       if (raf) cancelAnimationFrame(raf);
+    };
+  }, [zoomMode, computeFitScale]);
+
+  useEffect(() => {
+    if (zoomMode === 'custom') return;
+    let timeout: number | undefined;
+    const handleResize = () => {
+      if (timeout) window.clearTimeout(timeout);
+      timeout = window.setTimeout(() => computeFitScale(zoomMode), 120);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      if (timeout) window.clearTimeout(timeout);
+      window.removeEventListener('resize', handleResize);
     };
   }, [zoomMode, computeFitScale]);
 
@@ -793,11 +819,18 @@ export default function WiringEditorV2Client(props: Props) {
           +
         </button>
         <button
-          className={zoomMode === 'fit' ? 'btn' : 'btn secondary'}
+          className={zoomMode === 'fitWidth' ? 'btn' : 'btn secondary'}
           type="button"
-          onClick={() => setZoomMode('fit')}
+          onClick={() => setZoomMode('fitWidth')}
         >
           Fit width
+        </button>
+        <button
+          className={zoomMode === 'fitPage' ? 'btn' : 'btn secondary'}
+          type="button"
+          onClick={() => setZoomMode('fitPage')}
+        >
+          Fit page
         </button>
       </div>
     </div>
@@ -1184,6 +1217,7 @@ export default function WiringEditorV2Client(props: Props) {
                 <div className="wiring-canvas-frame">
                   <div
                     className="wiring-canvas"
+                    ref={canvasRef}
                     style={{
                       width: A4_BASE_WIDTH,
                       transform: `scale(${scale})`,

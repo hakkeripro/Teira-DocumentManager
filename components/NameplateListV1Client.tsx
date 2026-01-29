@@ -144,19 +144,25 @@ export default function NameplateListV1Client(props: Props) {
   }
 
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
-      <div className="card">
-        <div className="row spaceBetween">
-          <div>
-            <h2 className="h2">Kilpiluettelo (v1)</h2>
-            <div className="muted small">
-              Johdettu kytkentäkuvista. Muutokset tallennetaan overrideina; derivointi voidaan päivittää menettämättä käsin tehtyjä korjauksia.
-            </div>
-          </div>
-          <div className="row" style={{ gap: 8 }}>
+    <div className="doc-editor" style={{ display: 'grid', gap: 12 }}>
+      <div className="doc-editor-topbar">
+        <div className="doc-editor-topbar__row doc-editor-topbar__row--breadcrumb">
+          <div className="doc-editor-breadcrumb">Documents / Nameplate list</div>
+          <div className="row doc-editor-topbar__actions" style={{ gap: 8 }}>
+            <label className="btn secondary" htmlFor="global-nav-toggle">
+              ☰ Menu
+            </label>
             <Link className="btn secondary" href={`/app/projects/${projectId}/centers/${subCenterId}/documents`}>
-              Back
+              Exit focus
             </Link>
+          </div>
+        </div>
+        <div className="doc-editor-topbar__row doc-editor-topbar__row--header">
+          <div>
+            <div className="doc-editor-title">Kilpiluettelo (v1)</div>
+            <div className="doc-editor-meta">Rev — · Draft</div>
+          </div>
+          <div className="row doc-editor-topbar__actions" style={{ gap: 8, flexWrap: 'wrap' }}>
             <button className="btn secondary" onClick={refresh} disabled={saving}>
               Refresh derived
             </button>
@@ -165,9 +171,13 @@ export default function NameplateListV1Client(props: Props) {
             </button>
           </div>
         </div>
-        {!canWrite ? <div className="muted small" style={{ marginTop: 6 }}>You have VIEWER role. Editing is disabled.</div> : null}
-        {error ? <div className="muted" style={{ marginTop: 8, color: 'var(--red)' }}>{error}</div> : null}
       </div>
+
+      <div className="muted small doc-editor-description">
+        Johdettu kytkentäkuvista. Muutokset tallennetaan overrideina; derivointi voidaan päivittää menettämättä käsin tehtyjä korjauksia.
+      </div>
+      {!canWrite ? <div className="muted small">You have VIEWER role. Editing is disabled.</div> : null}
+      {error ? <div className="muted" style={{ color: 'var(--red)' }}>{error}</div> : null}
 
       <div className="card" style={{ overflowX: 'auto' }}>
         <div className="row spaceBetween" style={{ marginBottom: 10 }}>

@@ -83,16 +83,30 @@ export default async function WiringModulePage({
 
   return (
     <div className="page" style={{ display: 'grid', gap: 12 }}>
-      <div className="card">
-        <div className="row spaceBetween">
-          <div>
-            <h2 className="h2">Module: <span className="mono">{moduleName}</span></h2>
-            <div className="muted small">
-              Project <span className="mono">{project.code}</span> · Center <span className="mono">{center.code ?? center.id}</span>
-            </div>
-            <div className="muted small">Points in module: <span className="mono">{points.length}</span></div>
+      <div className="doc-editor-topbar">
+        <div className="doc-editor-topbar__row doc-editor-topbar__row--breadcrumb">
+          <div className="doc-editor-breadcrumb">Documents / Wiring diagrams / Module</div>
+          <div className="row doc-editor-topbar__actions" style={{ gap: 8 }}>
+            <label className="btn secondary" htmlFor="global-nav-toggle">
+              ☰ Menu
+            </label>
+            <Link className="btn secondary" href={`/app/projects/${project.id}/centers/${center.id}/documents`}>
+              Exit focus
+            </Link>
           </div>
-          <div className="row" style={{ gap: 8 }}>
+        </div>
+        <div className="doc-editor-topbar__row doc-editor-topbar__row--header">
+          <div>
+            <div className="doc-editor-title">
+              Module: <span className="mono">{moduleName}</span>
+            </div>
+            <div className="doc-editor-meta">
+              Project <span className="mono">{project.code}</span> · Center{' '}
+              <span className="mono">{center.code ?? center.id}</span> · Points{' '}
+              <span className="mono">{points.length}</span>
+            </div>
+          </div>
+          <div className="row doc-editor-topbar__actions" style={{ gap: 8, flexWrap: 'wrap' }}>
             <Link className="btn secondary" href={`/app/projects/${project.id}/centers/${center.id}/documents/WIRING_DIAGRAMS/editor`}>
               Back to modules
             </Link>

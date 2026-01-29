@@ -49,6 +49,17 @@ Vaatimus:
 - “Add module” näkyy ilman scrollausta Pages-paneelin yläosassa (header).
 - A4-canvas ei saa missään viewport-tilassa renderöityä Pages-paneelin alle (ei responsive stackausta).
 
+## Focus Mode + Compact Header (Sprint: Focus Mode)
+Editorireiteillä käytetään **Document Workspace Shell** -määrittelyä. Katso: `docs/16_DOCUMENT_WORKSPACE_SHELL.md`.
+
+Lisävaatimukset WIRING_DIAGRAMS-editorille:
+- Fokus-tila on oletuksena päällä editorireiteillä (myös desktop).
+- Yläpalkki on **yksi sticky top bar**, jossa:
+  - breadcrumb (1 rivi)
+  - dokumentin title + rev + save status
+  - actions: Import XML, Export XML, Audit, Issues
+  - tabit (Kytkentäkuva / Työkirja / Pages / Inspector) kompaktissa rivissä.
+
 ## Sivunumerointi ja lukitus
 - AS-P-keskuksessa oletussivut:
   - 01 = PS (**LOCKED**)
@@ -125,6 +136,11 @@ Kun terminal_code:lla on useita connector_lines:
 - 768–1279: 2-paneeli (Pages + Canvas), Inspector drawer.
 - <768: Canvas only, Pages + Inspector drawers.
 - Wiring canvas default zoom = **Auto-fit page**, recomputed on resize and panel width changes.
+
+## Fit Page -reunan varmistus (no clipping)
+- Fit Page -laskenta tehdään **keskimmäisen viewport-elementin** `clientWidth`/`clientHeight`-arvoista.
+- Kaikki padding/border + **safe gutter 16px** vähennetään ennen skaalausta.
+- Wrapperin koko = `A4_W * scale` ja `A4_H * scale`, ja sisäelementin `transform-origin` on top-left.
 
 ## Kansi ja revisiot
 - Publish-putki tuottaa kansisivun + revisiotaulukon minimitasolla.

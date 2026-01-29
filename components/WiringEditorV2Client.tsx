@@ -53,6 +53,7 @@ const TEMPLATE_IDS = Object.keys(MODULE_TEMPLATES) as ModuleTemplateId[];
 const A4_BASE_WIDTH = 1200;
 const A4_BASE_HEIGHT = Math.round(A4_BASE_WIDTH * (841.89 / 595.28));
 const CENTER_PANE_PADDING = 12;
+const FIT_SAFE_GUTTER = 16;
 const ZOOM_MIN = 0.2;
 const ZOOM_MAX = 3;
 
@@ -226,6 +227,7 @@ export default function WiringEditorV2Client(props: Props) {
   const importFileRef = useRef<HTMLInputElement | null>(null);
   const workspaceRootRef = useRef<HTMLDivElement | null>(null);
   const centerPaneRef = useRef<HTMLDivElement | null>(null);
+  const canvasViewportRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
   // Add module form state
@@ -268,10 +270,15 @@ export default function WiringEditorV2Client(props: Props) {
   }, []);
 
   const computeFitScale = useCallback((mode: ZoomMode) => {
-    const el = centerPaneRef.current;
+    const el = canvasViewportRef.current;
     if (!el) return;
-    const availableWidth = el.clientWidth - CENTER_PANE_PADDING * 2;
-    const availableHeight = el.clientHeight - CENTER_PANE_PADDING * 2;
+    const styles = window.getComputedStyle(el);
+    const paddingX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+    const paddingY = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+    const borderX = parseFloat(styles.borderLeftWidth) + parseFloat(styles.borderRightWidth);
+    const borderY = parseFloat(styles.borderTopWidth) + parseFloat(styles.borderBottomWidth);
+    const availableWidth = el.clientWidth - paddingX - borderX - FIT_SAFE_GUTTER;
+    const availableHeight = el.clientHeight - paddingY - borderY - FIT_SAFE_GUTTER;
     if (availableWidth <= 0 || availableHeight <= 0) return;
     const scaleW = availableWidth / A4_BASE_WIDTH;
     const scaleH = availableHeight / A4_BASE_HEIGHT;
@@ -279,10 +286,21 @@ export default function WiringEditorV2Client(props: Props) {
     const scaleFitWidth = scaleW;
     const nextScale = mode === 'fitWidth' ? scaleFitWidth : scaleAutoPage;
     setScale(clamp(nextScale, ZOOM_MIN, ZOOM_MAX));
+    if (process.env.NODE_ENV !== 'production') {
+      // Assertion-style log to verify fit metrics (prevent clipping regressions).
+      console.debug('[wiring-fit]', {
+        mode,
+        availableWidth,
+        availableHeight,
+        scaleW,
+        scaleH,
+        nextScale,
+      });
+    }
   }, []);
 
   useEffect(() => {
-    const el = centerPaneRef.current;
+    const el = canvasViewportRef.current;
     if (!el) return;
     let raf = 0;
     const observer = new ResizeObserver(() => {
@@ -1095,7 +1113,7 @@ export default function WiringEditorV2Client(props: Props) {
   // Import/Export toolbar (appears in both tabs per docs/03_IMPORT_EXPORT.md)
   function renderImportExportToolbar() {
     return (
-      <div className="row" style={{ gap: 8 }}>
+      <div className="row doc-editor-topbar__actions-group" style={{ gap: 8 }}>
         <input
           ref={importFileRef}
           type="file"
@@ -1123,14 +1141,70 @@ export default function WiringEditorV2Client(props: Props) {
 
   return (
     <div className="wiring-workspace" ref={workspaceRootRef}>
-      <div className="row spaceBetween" style={{ gap: 12 }}>
-        <div>
-          <h1>WIRING_DIAGRAMS</h1>
-          <div className="muted">Kytkentäkuvaeditori</div>
+      <div className="doc-editor-topbar">
+        <div className="doc-editor-topbar__row doc-editor-topbar__row--breadcrumb">
+          <div className="doc-editor-breadcrumb">Documents / Wiring diagrams</div>
+          <div className="row doc-editor-topbar__actions" style={{ gap: 8 }}>
+            <label className="btn secondary" htmlFor="global-nav-toggle">
+              ☰ Menu
+            </label>
+            <Link className="btn secondary" href={`/app/projects/${projectId}/centers/${subCenterId}/documents`}>
+              Exit focus
+            </Link>
+          </div>
         </div>
-        <Link className="btn secondary" href={`/app/projects/${projectId}/centers/${subCenterId}/documents`}>
-          Back to documents
-        </Link>
+        <div className="doc-editor-topbar__row doc-editor-topbar__row--header">
+          <div>
+            <div className="doc-editor-title">Wiring diagrams</div>
+            <div className="doc-editor-meta">Rev — · Draft</div>
+          </div>
+          <div className="row doc-editor-topbar__actions" style={{ gap: 8, flexWrap: 'wrap' }}>
+            {renderImportExportToolbar()}
+            <Link className="btn secondary" href={`/app/projects/${projectId}/centers/${subCenterId}/imports`}>
+              Audit
+            </Link>
+            <Link className="btn secondary" href={`/app/projects/${projectId}/centers/${subCenterId}/import`}>
+              Issues
+            </Link>
+          </div>
+        </div>
+        <div className="doc-editor-topbar__row doc-editor-topbar__row--controls">
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <button className={tab === 'editor' ? 'btn' : 'btn secondary'} onClick={() => setTab('editor')}>
+              Kytkentäkuva
+            </button>
+            <button className={tab === 'workbook' ? 'btn' : 'btn secondary'} onClick={() => setTab('workbook')}>
+              Työkirja
+            </button>
+            <button
+              className="btn secondary wiring-pages-toggle"
+              type="button"
+              onClick={() => setPagesDrawerOpen(true)}
+            >
+              Pages
+            </button>
+            <button
+              className="btn secondary wiring-inspector-toggle"
+              type="button"
+              onClick={() => setInspectorDrawerOpen(true)}
+            >
+              Inspector
+            </button>
+          </div>
+
+          <div className="row" style={{ gap: 8, alignItems: 'center' }}>
+            <div className="muted small">Automation server type</div>
+            <select
+              className="select"
+              disabled={!canWrite}
+              value={state.automationServerType ?? ''}
+              onChange={(e) => setAutomationServerType(e.currentTarget.value)}
+            >
+              <option value="">(none)</option>
+              <option value="AS-P">AS-P</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Import changes pending banner (per docs/04_REVISION_WORKFLOW.md) */}
@@ -1158,49 +1232,6 @@ export default function WiringEditorV2Client(props: Props) {
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: 12 }}>
-        <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
-          <div className="row" style={{ gap: 8, alignItems: 'center' }}>
-            <div className="muted small">Automation server type</div>
-            <select
-              className="select"
-              disabled={!canWrite}
-              value={state.automationServerType ?? ''}
-              onChange={(e) => setAutomationServerType(e.currentTarget.value)}
-            >
-              <option value="">(none)</option>
-              <option value="AS-P">AS-P</option>
-            </select>
-          </div>
-
-          <div className="row" style={{ gap: 8 }}>
-            <button className={tab === 'editor' ? 'btn' : 'btn secondary'} onClick={() => setTab('editor')}>
-              Kytkentäkuva
-            </button>
-            <button className={tab === 'workbook' ? 'btn' : 'btn secondary'} onClick={() => setTab('workbook')}>
-              Työkirja
-            </button>
-            <button
-              className="btn secondary wiring-pages-toggle"
-              type="button"
-              onClick={() => setPagesDrawerOpen(true)}
-            >
-              Pages
-            </button>
-            <button
-              className="btn secondary wiring-inspector-toggle"
-              type="button"
-              onClick={() => setInspectorDrawerOpen(true)}
-            >
-              Inspector
-            </button>
-          </div>
-
-          {/* Import/Export in toolbar (both tabs per docs/03_IMPORT_EXPORT.md) */}
-          {renderImportExportToolbar()}
-        </div>
-      </div>
-
       {tab === 'editor' ? (
         <>
           <div className="wiring-workspace__grid">
@@ -1211,7 +1242,7 @@ export default function WiringEditorV2Client(props: Props) {
 
             {/* CENTER: A4 wiring diagram (per FINAL-S2) */}
             <div className="wiring-workspace__column wiring-workspace__center" ref={centerPaneRef}>
-              <div className="wiring-canvas-scroll" style={{ padding: CENTER_PANE_PADDING }}>
+              <div className="wiring-canvas-scroll" ref={canvasViewportRef} style={{ padding: CENTER_PANE_PADDING }}>
                 <div className="wiring-canvas-frame">
                   <div
                     className="wiring-canvas-wrapper"

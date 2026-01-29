@@ -26,7 +26,7 @@ export default async function CenterLayout({
 
   return (
     <div className="page">
-      <div className="row spaceBetween">
+      <div className="row spaceBetween center-shell-header">
         <div>
           <h1>
             {center.code ?? '—'} — {center.name}
@@ -45,7 +45,7 @@ export default async function CenterLayout({
         </div>
       </div>
 
-      <div className="card" style={{ padding: 12 }}>
+      <div className="card center-shell-nav" style={{ padding: 12 }}>
         <div className="row" style={{ gap: 12 }}>
           <Link className="link" href={`/app/projects/${project.id}/centers/${center.id}/documents`}>
             Documents

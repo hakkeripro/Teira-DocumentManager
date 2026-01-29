@@ -114,6 +114,12 @@ button[disabled] { opacity: 0.5; cursor: not-allowed; }
   overflow: auto;
 }
 
+.wiring-workspace__center {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
 .wiring-panel {
   min-width: 0;
   min-height: 0;
@@ -129,6 +135,7 @@ button[disabled] { opacity: 0.5; cursor: not-allowed; }
 .wiring-canvas-scroll {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   overflow: visible;
 }
 
@@ -136,10 +143,17 @@ button[disabled] { opacity: 0.5; cursor: not-allowed; }
   width: 100%;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
+}
+
+.wiring-canvas-wrapper {
+  position: relative;
+  overflow: visible;
 }
 
 .wiring-canvas {
   transform-origin: top left;
+  background: #fff;
 }
 
 .wiring-pages-toggle,

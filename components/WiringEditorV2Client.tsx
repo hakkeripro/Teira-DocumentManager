@@ -51,9 +51,10 @@ const WORKBOOK_COLUMNS: { key: string; label: string }[] = [
 
 const TEMPLATE_IDS = Object.keys(MODULE_TEMPLATES) as ModuleTemplateId[];
 const A4_BASE_WIDTH = 1200;
+const A4_BASE_HEIGHT = Math.round(A4_BASE_WIDTH * (841.89 / 595.28));
 const CENTER_PANE_PADDING = 12;
-const ZOOM_MIN = 0.8;
-const ZOOM_MAX = 2;
+const ZOOM_MIN = 0.2;
+const ZOOM_MAX = 3;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -208,7 +209,7 @@ export default function WiringEditorV2Client(props: Props) {
   const [tab, setTab] = useState<Tab>('editor');
   const [state, setState] = useState<WiringV2State>(initialState);
   const [selectedPageId, setSelectedPageId] = useState<string>(() => initialState.pageOrder[0] ?? initialState.pages[0]?.id ?? '');
-  const [zoomMode, setZoomMode] = useState<ZoomMode>('fitWidth');
+  const [zoomMode, setZoomMode] = useState<ZoomMode>('fitPage');
   const [scale, setScale] = useState(1);
   const [pagesDrawerOpen, setPagesDrawerOpen] = useState(false);
   const [inspectorDrawerOpen, setInspectorDrawerOpen] = useState(false);
@@ -268,34 +269,31 @@ export default function WiringEditorV2Client(props: Props) {
 
   const computeFitScale = useCallback((mode: ZoomMode) => {
     const el = centerPaneRef.current;
-    const canvas = canvasRef.current;
     if (!el) return;
     const availableWidth = el.clientWidth - CENTER_PANE_PADDING * 2;
     const availableHeight = el.clientHeight - CENTER_PANE_PADDING * 2;
-    if (availableWidth <= 0) return;
-    let nextScale = availableWidth / A4_BASE_WIDTH;
-    if (mode === 'fitPage' && canvas && availableHeight > 0) {
-      const canvasHeight = canvas.scrollHeight || canvas.clientHeight;
-      if (canvasHeight > 0) {
-        nextScale = Math.min(nextScale, availableHeight / canvasHeight);
-      }
-    }
+    if (availableWidth <= 0 || availableHeight <= 0) return;
+    const scaleW = availableWidth / A4_BASE_WIDTH;
+    const scaleH = availableHeight / A4_BASE_HEIGHT;
+    const scaleAutoPage = Math.min(scaleW, scaleH);
+    const scaleFitWidth = scaleW;
+    const nextScale = mode === 'fitWidth' ? scaleFitWidth : scaleAutoPage;
     setScale(clamp(nextScale, ZOOM_MIN, ZOOM_MAX));
   }, []);
 
   useEffect(() => {
-    if (zoomMode === 'custom') return;
     const el = centerPaneRef.current;
-    const canvas = canvasRef.current;
     if (!el) return;
     let raf = 0;
     const observer = new ResizeObserver(() => {
+      if (zoomMode === 'custom') return;
       if (raf) cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => computeFitScale(zoomMode));
     });
     observer.observe(el);
-    if (canvas) observer.observe(canvas);
-    computeFitScale(zoomMode);
+    if (zoomMode !== 'custom') {
+      computeFitScale(zoomMode);
+    }
     return () => {
       observer.disconnect();
       if (raf) cancelAnimationFrame(raf);
@@ -809,13 +807,13 @@ export default function WiringEditorV2Client(props: Props) {
       </div>
       <div className="h2" style={{ marginBottom: 8 }}>Zoom</div>
       <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-        <button className="btn secondary" type="button" onClick={() => setCustomZoom(scale - 0.1)}>
+        <button className="btn secondary" type="button" onClick={() => setCustomZoom(scale * 0.9)}>
           −
         </button>
         <div className="mono" style={{ minWidth: 56, textAlign: 'center' }}>
           {zoomPercent}%
         </div>
-        <button className="btn secondary" type="button" onClick={() => setCustomZoom(scale + 0.1)}>
+        <button className="btn secondary" type="button" onClick={() => setCustomZoom(scale * 1.1)}>
           +
         </button>
         <button
@@ -1216,14 +1214,23 @@ export default function WiringEditorV2Client(props: Props) {
               <div className="wiring-canvas-scroll" style={{ padding: CENTER_PANE_PADDING }}>
                 <div className="wiring-canvas-frame">
                   <div
-                    className="wiring-canvas"
-                    ref={canvasRef}
+                    className="wiring-canvas-wrapper"
                     style={{
-                      width: A4_BASE_WIDTH,
-                      transform: `scale(${scale})`,
+                      width: A4_BASE_WIDTH * scale,
+                      height: A4_BASE_HEIGHT * scale,
                     }}
                   >
-                    {renderGrid()}
+                    <div
+                      className="wiring-canvas"
+                      ref={canvasRef}
+                      style={{
+                        width: A4_BASE_WIDTH,
+                        height: A4_BASE_HEIGHT,
+                        transform: `scale(${scale})`,
+                      }}
+                    >
+                      {renderGrid()}
+                    </div>
                   </div>
                 </div>
               </div>

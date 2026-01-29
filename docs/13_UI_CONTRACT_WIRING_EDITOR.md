@@ -124,7 +124,7 @@ Kun terminal_code:lla on useita connector_lines:
 - 1280px+: 3-paneeli (Pages + Canvas + Inspector).
 - 768–1279: 2-paneeli (Pages + Canvas), Inspector drawer.
 - <768: Canvas only, Pages + Inspector drawers.
-- Wiring canvas default zoom = **Fit width**, recomputed on resize and panel width changes.
+- Wiring canvas default zoom = **Auto-fit page**, recomputed on resize and panel width changes.
 
 ## Kansi ja revisiot
 - Publish-putki tuottaa kansisivun + revisiotaulukon minimitasolla.

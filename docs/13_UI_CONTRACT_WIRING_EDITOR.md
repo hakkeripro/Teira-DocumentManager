@@ -36,6 +36,7 @@ Vaatimus:
 
 - **Oikea**: A4 portrait -sivu (print-grid / canvas)
   - A4-sivun mittasuhde ja sarakejako vastaa referenssejä
+  - **A4 wiring canvas must be to the right of the pages panel, never below.** (LOCKED)
   - **A4-kytkentäkuva renderöidään aina Pages-paneelin oikealle puolelle — ei koskaan Pages-paneelin alapuolelle.** (LOCKED)
 
 **FINAL-S1 (2026-01-25):** Folder expand/collapse -toiminto on tarkoitettu **vain päänavigaatioon** (Areas/Projects main tree).
@@ -46,6 +47,7 @@ Vaatimus:
 - Viewportissa Pages-paneeli pysyy vasemmalla ja A4-canvas pysyy oikealla; UI ei “stackaudu” siten, että A4 siirtyisi Pages-paneelin alle.
 - Jos leveys ei riitä kahteen paneeliin, ratkaisu on **horisontaalinen scroll / overflow** (tai muu sivusuuntainen ratkaisu), ei vertikaalinen pinoutuminen.
 - “Add module” näkyy ilman scrollausta Pages-paneelin yläosassa (header).
+- A4-canvas ei saa missään viewport-tilassa renderöityä Pages-paneelin alle (ei responsive stackausta).
 
 ## Sivunumerointi ja lukitus
 - AS-P-keskuksessa oletussivut:

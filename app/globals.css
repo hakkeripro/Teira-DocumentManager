@@ -139,5 +139,10 @@ button[disabled] { opacity: 0.5; cursor: not-allowed; }
 .treeProjects { list-style: none; margin: 8px 0 0 12px; padding: 0; display: grid; gap: 6px; }
 .treeProject { color: var(--muted); text-decoration: none; }
 .treeProject:hover { color: var(--text); text-decoration: none; }
+.treeFolder { margin: 0; }
+.treeSummary { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; }
+.treeSummary::-webkit-details-marker { display: none; }
+.treeCaret { display: inline-block; font-size: 10px; color: var(--muted); transition: transform 0.12s ease; }
+.treeFolder:not([open]) .treeCaret { transform: rotate(-90deg); }
 
 .error { background: rgba(255, 80, 80, 0.12); border: 1px solid rgba(255, 80, 80, 0.28); padding: 10px 12px; border-radius: 10px; }

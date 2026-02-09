@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { DragEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import type { DragEvent, ChangeEvent } from 'react';
 import Link from 'next/link';
 import type { CanonicalRow, WiringV2Page, WiringV2State, WiringV2TerminalRow } from '@/lib/wiringEditorV2';
 import { MODULE_TEMPLATES, type ModuleTemplateId, getTemplate } from '@/lib/templates/moduleTemplates';
@@ -15,6 +15,15 @@ type Props = {
 };
 
 type Tab = 'editor' | 'workbook';
+
+/** Cached import session for accept flow (no re-select needed per Sprint 1b) */
+type ImportSession = {
+  filename: string;
+  preview: { added: number; modified: number; removed: number };
+  /** Base64-encoded file content for commit */
+  fileData: string;
+  fileType: string;
+};
 
 const WORKBOOK_COLUMNS: { key: string; label: string }[] = [
   { key: 'module_name', label: 'module_name' },
@@ -95,6 +104,96 @@ function parseTSV(text: string): string[][] {
     .map((line) => line.split('\t'));
 }
 
+/** Convert file to base64 for caching */
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Remove data URL prefix
+      const base64 = result.split(',')[1] ?? result;
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/** Inline styles for print-grid table (white table, thin borders, black text per golden ref) */
+const printGridStyles = {
+  table: {
+    borderCollapse: 'collapse' as const,
+    width: '100%',
+    minWidth: 1200,
+    background: '#fff',
+    fontSize: 11,
+    fontFamily: 'Arial, sans-serif',
+    color: '#000', // Black text
+  },
+  th: {
+    border: '1px solid #000',
+    padding: '4px 6px',
+    background: '#fff',
+    fontWeight: 600,
+    textAlign: 'center' as const,
+    verticalAlign: 'bottom' as const,
+    fontSize: 10,
+    color: '#000', // Black header text
+  },
+  thGroup: {
+    border: '1px solid #000',
+    padding: '2px 4px',
+    background: '#fff',
+    fontWeight: 600,
+    textAlign: 'center' as const,
+    fontSize: 10,
+    color: '#000', // Black header text
+  },
+  td: {
+    border: '1px solid #000',
+    padding: '2px 4px',
+    verticalAlign: 'top' as const,
+    background: '#fff',
+    color: '#000',
+  },
+  input: {
+    width: '100%',
+    border: 'none',
+    background: 'transparent',
+    fontSize: 10,
+    padding: '2px',
+    outline: 'none',
+    color: '#000',
+  },
+};
+
+/** 
+ * Group terminals into IO channel blocks for row grouping.
+ * Each IO channel (DI1, DI2, etc.) has connector_lines that should be rendered as multiple rows.
+ * Per golden ref: Liitin, Kaapeli1 Pari, Välikytkentäpaikka, Kaapeli2 Pari, Minne johdetaan Liitin
+ * are per-connector-line. Others use rowSpan.
+ */
+type TerminalGroup = {
+  /** Primary terminal code (e.g., DI1) */
+  terminalCode: string;
+  /** Connector lines to display in Liitin column */
+  connectorLines: string[];
+};
+
+function groupTerminalsForPrintGrid(
+  terminals: { terminal_code: string; print_label: string; order: number; group?: string; connector_lines?: string[] }[]
+): TerminalGroup[] {
+  const sorted = [...terminals].sort((a, b) => a.order - b.order);
+  
+  return sorted.map((t) => ({
+    terminalCode: t.terminal_code,
+    // Use connector_lines if defined, otherwise fall back to single print_label
+    connectorLines: t.connector_lines && t.connector_lines.length > 0 
+      ? t.connector_lines 
+      : [t.print_label],
+  }));
+}
+
 export default function WiringEditorV2Client(props: Props) {
   const { projectId, subCenterId, canWrite, initialState } = props;
   const [tab, setTab] = useState<Tab>('editor');
@@ -105,6 +204,16 @@ export default function WiringEditorV2Client(props: Props) {
   const [workbookRows, setWorkbookRows] = useState<CanonicalRow[]>(() => props.canonicalRows.map((r) => ({ ...r })));
   const [workbookDirty, setWorkbookDirty] = useState(false);
   const workbookTextAreaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Import/Export state with cached session (fix for D: no re-select needed)
+  const [importSession, setImportSession] = useState<ImportSession | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const importFileRef = useRef<HTMLInputElement | null>(null);
+
+  // Add module form state
+  const [newModuleName, setNewModuleName] = useState('');
+  const [newTemplateId, setNewTemplateId] = useState<ModuleTemplateId>('DI-16');
 
   const pagesById = useMemo(() => {
     const map = new Map(state.pages.map((p) => [p.id, p] as const));
@@ -121,9 +230,6 @@ export default function WiringEditorV2Client(props: Props) {
   useEffect(() => {
     if (!selectedPageId && orderedPages.length > 0) setSelectedPageId(orderedPages[0].id);
   }, [selectedPageId, orderedPages]);
-
-  const [newModuleName, setNewModuleName] = useState('');
-  const [newTemplateId, setNewTemplateId] = useState<ModuleTemplateId>('DI-16');
 
   async function addModulePage() {
     if (!canWrite) return;
@@ -178,12 +284,41 @@ export default function WiringEditorV2Client(props: Props) {
     await apiPatch({ patch: { terminalPatches: [{ pageId, terminalCode, patch }] } });
   }
 
+  // Reorder pages - this updates pageOrder AND page codes (fix for C: address sync)
   async function reorderPages(fromIdx: number, toIdx: number) {
     if (!canWrite) return;
     const ids = [...(state.pageOrder.length ? state.pageOrder : state.pages.map((p) => p.id))];
     const [moved] = ids.splice(fromIdx, 1);
     ids.splice(toIdx, 0, moved);
-    await apiPatch({ patch: { pageOrder: ids } });
+
+    // Update page codes based on new order (non-locked pages get sequential codes)
+    const avoid = new Set<string>();
+    if (String(state.automationServerType ?? '').toUpperCase() === 'AS-P') {
+      avoid.add('01');
+      avoid.add('02');
+    }
+
+    // Recalculate codes for all non-locked pages based on new order
+    const updatedPages: WiringV2Page[] = [];
+    let nextCode = String(state.automationServerType ?? '').toUpperCase() === 'AS-P' ? 3 : 1;
+
+    for (const id of ids) {
+      const page = pagesById.get(id);
+      if (!page) continue;
+
+      if (page.locked) {
+        // Locked pages keep their codes
+        updatedPages.push(page);
+      } else {
+        // Non-locked pages get sequential codes based on new order
+        while (avoid.has(String(nextCode).padStart(2, '0'))) nextCode++;
+        const newCode = String(nextCode).padStart(2, '0');
+        updatedPages.push({ ...page, code: newCode });
+        nextCode++;
+      }
+    }
+
+    await apiPatch({ patch: { pageOrder: ids, upsertPages: updatedPages } });
   }
 
   function onDragStart(e: DragEvent<HTMLLIElement>, idx: number) {
@@ -212,86 +347,289 @@ export default function WiringEditorV2Client(props: Props) {
     setSelectedPageId(orderedPages[n].id);
   }
 
+  // Get point data from canonical rows for the current page (fix for B: data visibility)
+  // Maps terminal_code (DI1, UI1, AO1, DO1, etc.) to the canonical row
+  const pagePointData = useMemo(() => {
+    if (!selectedPage?.moduleRef?.moduleName) return new Map<string, CanonicalRow>();
+    const moduleName = selectedPage.moduleRef.moduleName;
+    const templateId = selectedPage.templateId;
+    const pointMap = new Map<string, CanonicalRow>();
+
+    // Determine the terminal code prefix based on template type
+    const prefix = templateId.replace(/-\d+.*$/, '').replace('-V', '').replace('-FA', ''); // DI, UI, AO, DO
+
+    for (const row of props.canonicalRows) {
+      // Match by module_name if available
+      if (row.module_name && row.module_name !== moduleName) continue;
+      // Also try matching by module_xml_type if module_name not set
+      if (!row.module_name && row.module_xml_type) {
+        const xmlUpper = String(row.module_xml_type).toUpperCase();
+        if (!xmlUpper.includes(prefix)) continue;
+      }
+
+      // Extract channel number and construct terminal code
+      const inCh = row.input_channel_number;
+      const outCh = row.output_channel_number;
+      let terminalCode = '';
+
+      // For DI/UI modules, use input_channel_number
+      if (prefix === 'DI' || prefix === 'UI') {
+        if (inCh != null && String(inCh).trim()) {
+          terminalCode = `${prefix}${inCh}`;
+        }
+      }
+      // For AO/DO modules, use output_channel_number
+      else if (prefix === 'AO' || prefix === 'DO') {
+        if (outCh != null && String(outCh).trim()) {
+          terminalCode = `${prefix}${outCh}`;
+        }
+      }
+      // Fallback: try both channels
+      else {
+        if (inCh != null && String(inCh).trim()) {
+          terminalCode = `IN${inCh}`;
+        } else if (outCh != null && String(outCh).trim()) {
+          terminalCode = `OUT${outCh}`;
+        }
+      }
+
+      if (terminalCode) {
+        pointMap.set(terminalCode, row);
+      }
+    }
+
+    // Also populate from workbookRows for latest data
+    for (const row of workbookRows) {
+      if (row.module_name && row.module_name !== moduleName) continue;
+      
+      const inCh = row.input_channel_number;
+      const outCh = row.output_channel_number;
+      let terminalCode = '';
+
+      if (prefix === 'DI' || prefix === 'UI') {
+        if (inCh != null && String(inCh).trim()) {
+          terminalCode = `${prefix}${inCh}`;
+        }
+      } else if (prefix === 'AO' || prefix === 'DO') {
+        if (outCh != null && String(outCh).trim()) {
+          terminalCode = `${prefix}${outCh}`;
+        }
+      }
+
+      // Workbook takes precedence over canonical rows
+      if (terminalCode) {
+        pointMap.set(terminalCode, row);
+      }
+    }
+
+    return pointMap;
+  }, [selectedPage, props.canonicalRows, workbookRows]);
+
+  // Print-grid rendering with proper rowSpan grouping (fix for A: parity)
   function renderGrid() {
     if (!selectedPage) return <div className="muted">No pages.</div>;
     const template = getTemplate(selectedPage.templateId);
-    const terminals = [...template.terminals].sort((a, b) => a.order - b.order);
+    const terminalGroups = groupTerminalsForPrintGrid(template.terminals);
+
     return (
-      <div className="card" style={{ overflowX: 'auto' }}>
-        <div className="row spaceBetween" style={{ gap: 12 }}>
-          <div>
-            <div className="h2"><span className="mono">{selectedPage.code}_{selectedPage.templateId}</span></div>
-            <div className="h2" style={{ marginTop: 2 }}>{selectedPage.title}</div>
+      <div style={{ background: '#fff', padding: 16, border: '1px solid #ccc' }}>
+        {/* Page header matching golden reference format */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#000' }}>
+            {selectedPage.code}_{selectedPage.templateId}
           </div>
-          <div className="row" style={{ gap: 8 }}>
-            <button className="btn secondary" onClick={() => nextPage(-1)} disabled={!selectedPage || orderedPages[0]?.id === selectedPage.id}>
-              Prev
-            </button>
-            <button className="btn secondary" onClick={() => nextPage(1)} disabled={!selectedPage || orderedPages[orderedPages.length - 1]?.id === selectedPage.id}>
-              Next
-            </button>
+          <div style={{ fontSize: 12, color: '#000' }}>
+            {selectedPage.templateId}
           </div>
         </div>
 
-        <table className="table" style={{ minWidth: 980 }}>
-          <thead>
-            <tr>
-              <th style={{ width: 260 }}>Tunnus / Teksti</th>
-              <th style={{ width: 140 }}>Liitin</th>
-              <th style={{ width: 220 }}>Kaapeli 1</th>
-              <th style={{ width: 220 }}>Kaapeli 2</th>
-              <th style={{ width: 260 }}>Minne johdetaan</th>
-            </tr>
-          </thead>
-          <tbody>
-            {terminals.map((t) => {
-              const k = keyForTerminal(selectedPage.id, t.terminal_code);
-              const row = state.terminals[k] ?? {};
-              return (
-                <tr key={k}>
-                  <td>
-                    <input
-                      className="input"
-                      defaultValue={row.deviceText ?? ''}
-                      disabled={!canWrite}
-                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { deviceText: e.currentTarget.value })}
-                    />
-                  </td>
-                  <td>
-                    <div className="mono">{t.print_label}</div>
-                  </td>
-                  <td>
-                    <input
-                      className="input"
-                      defaultValue={row.cable1 ?? ''}
-                      disabled={!canWrite}
-                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { cable1: e.currentTarget.value })}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="input"
-                      defaultValue={row.cable2 ?? ''}
-                      disabled={!canWrite}
-                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { cable2: e.currentTarget.value })}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="input"
-                      defaultValue={row.destination ?? ''}
-                      disabled={!canWrite}
-                      onBlur={(e) => patchTerminal(selectedPage.id, t.terminal_code, { destination: e.currentTarget.value })}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <button className="btn secondary" onClick={() => nextPage(-1)} disabled={!selectedPage || orderedPages[0]?.id === selectedPage.id}>
+            ← Prev
+          </button>
+          <button className="btn secondary" onClick={() => nextPage(1)} disabled={!selectedPage || orderedPages[orderedPages.length - 1]?.id === selectedPage.id}>
+            Next →
+          </button>
+        </div>
 
-        <div className="muted small" style={{ marginTop: 10 }}>
-          Note: When a field device is wired directly to the module (default), the cable identifier belongs to <b>Kaapeli 1</b>. Use <b>Kaapeli 2</b> for intermediate terminal/segment cases.
+        {/* Print-grid table matching Kytkentakuva_DI16.png golden reference */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={printGridStyles.table}>
+            <thead>
+              {/* Row 1: Main group headers */}
+              <tr>
+                <th rowSpan={2} style={{ ...printGridStyles.th, width: 100 }}>Tunnus</th>
+                <th rowSpan={2} style={{ ...printGridStyles.th, width: 140 }}>Teksti</th>
+                <th rowSpan={2} style={{ ...printGridStyles.th, width: 70 }}>Liitin</th>
+                <th colSpan={3} style={printGridStyles.thGroup}>Kaapelointitiedot</th>
+                <th colSpan={2} style={printGridStyles.thGroup}>Kaapeli 2</th>
+                <th colSpan={2} style={printGridStyles.thGroup}>Minne johdetaan</th>
+                <th rowSpan={2} style={{ ...printGridStyles.th, width: 50 }}>Kytketty</th>
+                <th rowSpan={2} style={{ ...printGridStyles.th, width: 50 }}>Tarkastettu</th>
+              </tr>
+              {/* Row 2: Sub-headers */}
+              <tr>
+                {/* Kaapeli 1 sub-columns */}
+                <th style={{ ...printGridStyles.th, width: 70 }}>Pari nro<br/>tai<br/>johdin</th>
+                <th style={{ ...printGridStyles.th, width: 80 }}>Tyyppi<br/>koko<br/>nro</th>
+                <th style={{ ...printGridStyles.th, width: 100 }}>Välikytkentä-<br/>paikka ja<br/>liittimet</th>
+                {/* Kaapeli 2 sub-columns */}
+                <th style={{ ...printGridStyles.th, width: 80 }}>Tyyppi<br/>koko<br/>nro</th>
+                <th style={{ ...printGridStyles.th, width: 70 }}>Pari nro<br/>tai<br/>johdin</th>
+                {/* Minne johdetaan sub-columns */}
+                <th style={{ ...printGridStyles.th, width: 60 }}>Liitin</th>
+                <th style={{ ...printGridStyles.th, width: 100 }}>Kytkentäpaikka</th>
+              </tr>
+            </thead>
+            <tbody>
+              {terminalGroups.map((group) => {
+                const groupRows = Math.max(group.connectorLines.length, 1);
+                const k = keyForTerminal(selectedPage.id, group.terminalCode);
+                const terminalState = state.terminals[k] ?? {};
+
+                // Get point data from canonical rows (fix for B: data visibility)
+                // First try the terminal state, then workbook/canonical rows
+                const pointData = pagePointData.get(group.terminalCode);
+                const deviceTag = terminalState.deviceText || String(pointData?.point_name ?? '');
+                const deviceDesc = terminalState.description || String(pointData?.point_descr ?? '');
+
+                return group.connectorLines.map((connectorLine, lineIdx) => (
+                  <tr key={`${k}:${lineIdx}`}>
+                    {/* Cells with rowSpan (only on first row of group) */}
+                    {lineIdx === 0 && (
+                      <>
+                        {/* Tunnus (device tag) - rowSpan */}
+                        <td style={printGridStyles.td} rowSpan={groupRows}>
+                          <input
+                            style={printGridStyles.input}
+                            defaultValue={deviceTag}
+                            disabled={!canWrite}
+                            onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { deviceText: e.currentTarget.value })}
+                          />
+                        </td>
+                        {/* Teksti (description) - rowSpan */}
+                        <td style={printGridStyles.td} rowSpan={groupRows}>
+                          <input
+                            style={printGridStyles.input}
+                            defaultValue={deviceDesc}
+                            disabled={!canWrite}
+                            onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, description: e.currentTarget.value } as WiringV2TerminalRow)}
+                          />
+                        </td>
+                      </>
+                    )}
+                    {/* Liitin (connector line) - per row */}
+                    <td style={{ ...printGridStyles.td, fontSize: 9, lineHeight: 1.2 }}>
+                      {connectorLine}
+                    </td>
+                    {/* Kaapeli 1: Pari nro tai johdin - per row */}
+                    <td style={printGridStyles.td}>
+                      {lineIdx === 0 && (
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={(terminalState as Record<string, unknown>).cable1Pair as string ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, cable1Pair: e.currentTarget.value } as WiringV2TerminalRow)}
+                        />
+                      )}
+                    </td>
+                    {/* Kaapeli 1: Tyyppi koko nro - rowSpan */}
+                    {lineIdx === 0 && (
+                      <td style={printGridStyles.td} rowSpan={groupRows}>
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={terminalState.cable1 ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { cable1: e.currentTarget.value })}
+                        />
+                      </td>
+                    )}
+                    {/* Välikytkentäpaikka ja liittimet - per row */}
+                    <td style={printGridStyles.td}>
+                      {lineIdx === 0 && (
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={(terminalState as Record<string, unknown>).intermediateTerminal as string ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, intermediateTerminal: e.currentTarget.value } as WiringV2TerminalRow)}
+                        />
+                      )}
+                    </td>
+                    {/* Kaapeli 2: Tyyppi koko nro - rowSpan */}
+                    {lineIdx === 0 && (
+                      <td style={printGridStyles.td} rowSpan={groupRows}>
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={terminalState.cable2 ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { cable2: e.currentTarget.value })}
+                        />
+                      </td>
+                    )}
+                    {/* Kaapeli 2: Pari nro tai johdin - per row */}
+                    <td style={printGridStyles.td}>
+                      {lineIdx === 0 && (
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={(terminalState as Record<string, unknown>).cable2Pair as string ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, cable2Pair: e.currentTarget.value } as WiringV2TerminalRow)}
+                        />
+                      )}
+                    </td>
+                    {/* Minne johdetaan: Liitin - per row */}
+                    <td style={printGridStyles.td}>
+                      {lineIdx === 0 && (
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={(terminalState as Record<string, unknown>).destinationConnector as string ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, destinationConnector: e.currentTarget.value } as WiringV2TerminalRow)}
+                        />
+                      )}
+                    </td>
+                    {/* Minne johdetaan: Kytkentäpaikka - rowSpan */}
+                    {lineIdx === 0 && (
+                      <td style={printGridStyles.td} rowSpan={groupRows}>
+                        <input
+                          style={printGridStyles.input}
+                          defaultValue={terminalState.destination ?? ''}
+                          disabled={!canWrite}
+                          onBlur={(e) => patchTerminal(selectedPage.id, group.terminalCode, { destination: e.currentTarget.value })}
+                        />
+                      </td>
+                    )}
+                    {/* Kytketty (checkbox) - rowSpan */}
+                    {lineIdx === 0 && (
+                      <td style={{ ...printGridStyles.td, textAlign: 'center' }} rowSpan={groupRows}>
+                        <input
+                          type="checkbox"
+                          disabled={!canWrite}
+                          defaultChecked={Boolean((terminalState as Record<string, unknown>).connected)}
+                          onChange={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, connected: e.currentTarget.checked } as WiringV2TerminalRow)}
+                        />
+                      </td>
+                    )}
+                    {/* Tarkastettu (checkbox) - rowSpan */}
+                    {lineIdx === 0 && (
+                      <td style={{ ...printGridStyles.td, textAlign: 'center' }} rowSpan={groupRows}>
+                        <input
+                          type="checkbox"
+                          disabled={!canWrite}
+                          defaultChecked={Boolean((terminalState as Record<string, unknown>).verified)}
+                          onChange={(e) => patchTerminal(selectedPage.id, group.terminalCode, { ...terminalState, verified: e.currentTarget.checked } as WiringV2TerminalRow)}
+                        />
+                      </td>
+                    )}
+                  </tr>
+                ));
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginTop: 8, fontSize: 10, color: '#000' }}>
+          Sarakkeet: docs/ui_refs/wiring_editor_v2/Kytkentakuva_DI16.png
         </div>
       </div>
     );
@@ -336,14 +674,142 @@ export default function WiringEditorV2Client(props: Props) {
   async function saveWorkbook() {
     const patches: Array<{ rowIndex: number; field: string; value: unknown }> = [];
     workbookRows.forEach((row, idx) => {
-      // If the sheet is dirty we send a conservative patch set: all columns for changed rows.
-      // This keeps server logic simple and deterministic.
       for (const c of WORKBOOK_COLUMNS) {
         patches.push({ rowIndex: idx, field: c.key, value: row?.[c.key] ?? '' });
       }
     });
     await saveWorkbookPatches(patches);
   }
+
+  // Import handler - caches file data for accept flow (fix for D: no re-select)
+  const handleImportFile = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !canWrite) return;
+
+    setImporting(true);
+    try {
+      const fd = new FormData();
+      fd.append('projectId', projectId);
+      fd.append('subCenterId', subCenterId);
+      fd.append('docType', 'WIRING_DIAGRAMS');
+      fd.append('file', file);
+
+      // Dry-run first to check for changes
+      const dryRes = await fetch('/api/import/dry-run', { method: 'POST', body: fd });
+      if (!dryRes.ok) {
+        const msg = await dryRes.text();
+        alert(`Import error: ${msg}`);
+        return;
+      }
+      const dryData = await dryRes.json();
+
+      // Check for module mismatch (must be blocked per spec)
+      if (dryData.errorsCount > 0) {
+        alert(`Import blocked: ${dryData.errorsCount} errors. Modules may not match.`);
+        return;
+      }
+
+      // If there are changes, cache file and show banner
+      if (dryData.wouldCreate > 0 || dryData.wouldUpdate > 0) {
+        // Cache the file data for accept flow (fix for D)
+        const fileData = await fileToBase64(file);
+        setImportSession({
+          filename: file.name,
+          preview: {
+            added: dryData.wouldCreate,
+            modified: dryData.wouldUpdate,
+            removed: 0,
+          },
+          fileData,
+          fileType: file.type || 'application/octet-stream',
+        });
+      } else {
+        alert('No changes detected in import file.');
+      }
+    } catch (err) {
+      alert(`Import failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setImporting(false);
+      if (importFileRef.current) importFileRef.current.value = '';
+    }
+  }, [canWrite, projectId, subCenterId]);
+
+  // Accept import changes - uses cached data, creates revision (fix for D)
+  const handleAcceptImport = useCallback(async () => {
+    if (!canWrite || !importSession) return;
+
+    setImporting(true);
+    try {
+      // Convert cached base64 back to file for commit
+      const byteString = atob(importSession.fileData);
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      const blob = new Blob([ab], { type: importSession.fileType });
+      const file = new File([blob], importSession.filename, { type: importSession.fileType });
+
+      const fd = new FormData();
+      fd.append('projectId', projectId);
+      fd.append('subCenterId', subCenterId);
+      fd.append('docType', 'WIRING_DIAGRAMS');
+      fd.append('file', file);
+      fd.append('createRevision', 'true'); // Signal to create new revision
+
+      const commitRes = await fetch('/api/import/commit', { method: 'POST', body: fd });
+      if (!commitRes.ok) {
+        const msg = await commitRes.text();
+        alert(`Import commit error: ${msg}`);
+        return;
+      }
+
+      const commitData = await commitRes.json();
+      if (commitData.ok) {
+        setImportSession(null);
+        // Refresh to load new data
+        window.location.reload();
+      } else {
+        alert(`Import failed: ${commitData.message ?? 'Unknown error'}`);
+      }
+    } catch (err) {
+      alert(`Import failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setImporting(false);
+    }
+  }, [canWrite, importSession, projectId, subCenterId]);
+
+  // Dismiss import pending (cancel)
+  const handleDismissImport = useCallback(() => {
+    setImportSession(null);
+  }, []);
+
+  // Export XML handler
+  const handleExportXML = useCallback(async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({ projectId, subCenterId });
+      const res = await fetch(`/api/wiring-diagrams/export-xml?${params}`);
+      if (!res.ok) {
+        const msg = await res.text();
+        alert(`Export error: ${msg}`);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `WIRING_DIAGRAMS_${new Date().toISOString().slice(0, 10)}.xml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(`Export failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setExporting(false);
+    }
+  }, [projectId, subCenterId]);
 
   function renderWorkbook() {
     return (
@@ -427,17 +893,71 @@ export default function WiringEditorV2Client(props: Props) {
     );
   }
 
+  // Import/Export toolbar (appears in both tabs per docs/03_IMPORT_EXPORT.md)
+  function renderImportExportToolbar() {
+    return (
+      <div className="row" style={{ gap: 8 }}>
+        <input
+          ref={importFileRef}
+          type="file"
+          accept=".xml,.xlsx"
+          style={{ display: 'none' }}
+          onChange={handleImportFile}
+        />
+        <button
+          className="btn secondary"
+          disabled={!canWrite || importing}
+          onClick={() => importFileRef.current?.click()}
+        >
+          {importing ? 'Importing...' : 'Import XML'}
+        </button>
+        <button
+          className="btn secondary"
+          disabled={exporting}
+          onClick={handleExportXML}
+        >
+          {exporting ? 'Exporting...' : 'Export XML'}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
       <div className="row spaceBetween" style={{ gap: 12 }}>
         <div>
           <h1>WIRING_DIAGRAMS</h1>
-          <div className="muted">Editor v2 — Page model + templates + Työkirja</div>
+          <div className="muted">Kytkentäkuvaeditori</div>
         </div>
         <Link className="btn secondary" href={`/app/projects/${projectId}/centers/${subCenterId}/documents`}>
           Back to documents
         </Link>
       </div>
+
+      {/* Import changes pending banner (per docs/04_REVISION_WORKFLOW.md) */}
+      {importSession && (
+        <div className="card" style={{ marginBottom: 12, background: '#fff3cd', border: '1px solid #ffc107' }}>
+          <div className="row spaceBetween" style={{ gap: 12 }}>
+            <div>
+              <div className="h2" style={{ color: '#856404' }}>⚠️ Import changes pending</div>
+              <div className="muted" style={{ color: '#856404' }}>
+                File: {importSession.filename} — {importSession.preview.added} added, {importSession.preview.modified} modified
+              </div>
+              <div className="muted small" style={{ marginTop: 4 }}>
+                Accepting will create a new revision (rev bump) per revision workflow.
+              </div>
+            </div>
+            <div className="row" style={{ gap: 8 }}>
+              <button className="btn" onClick={handleAcceptImport} disabled={importing}>
+                {importing ? 'Processing...' : 'Accept & Create Revision'}
+              </button>
+              <button className="btn secondary" onClick={handleDismissImport} disabled={importing}>
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="card" style={{ marginBottom: 12 }}>
         <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
@@ -452,26 +972,61 @@ export default function WiringEditorV2Client(props: Props) {
               <option value="">(none)</option>
               <option value="AS-P">AS-P</option>
             </select>
-            <div className="muted small">(affects default locked pages 01/02)</div>
           </div>
 
           <div className="row" style={{ gap: 8 }}>
             <button className={tab === 'editor' ? 'btn' : 'btn secondary'} onClick={() => setTab('editor')}>
-              Editor
+              Kytkentäkuva
             </button>
             <button className={tab === 'workbook' ? 'btn' : 'btn secondary'} onClick={() => setTab('workbook')}>
               Työkirja
             </button>
           </div>
+
+          {/* Import/Export in toolbar (both tabs per docs/03_IMPORT_EXPORT.md) */}
+          {renderImportExportToolbar()}
         </div>
       </div>
 
       {tab === 'editor' ? (
         <div className="row" style={{ gap: 12, alignItems: 'flex-start' }}>
-          <div className="card" style={{ width: 320, padding: 12 }}>
-            <div className="h2">Pages</div>
-            <div className="muted small" style={{ marginBottom: 8 }}>Drag & drop to reorder (locked pages cannot be moved).</div>
-            <ul className="list">
+          {/* LEFT: Pages tree with Add module in header (per FINAL-S2) */}
+          <div className="card" style={{ width: 300, padding: 12 }}>
+            {/* Add module controls at TOP of card (per FINAL-S2) */}
+            <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #eee' }}>
+              <div className="h2" style={{ marginBottom: 8 }}>Add Module</div>
+              <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+                <input
+                  className="input"
+                  placeholder="Module name"
+                  value={newModuleName}
+                  disabled={!canWrite}
+                  onChange={(e) => setNewModuleName(e.currentTarget.value)}
+                  style={{ flex: 1, minWidth: 100 }}
+                />
+                <select
+                  className="select"
+                  value={newTemplateId}
+                  disabled={!canWrite}
+                  onChange={(e) => setNewTemplateId(e.currentTarget.value as ModuleTemplateId)}
+                  style={{ width: 90 }}
+                >
+                  {TEMPLATE_IDS.map((tid) => (
+                    <option key={tid} value={tid}>{tid}</option>
+                  ))}
+                </select>
+                <button className="btn" disabled={!canWrite || !newModuleName.trim()} onClick={addModulePage}>
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Pages list (flat, no folders per FINAL-S1) */}
+            <div className="h2" style={{ marginBottom: 8 }}>Pages</div>
+            <div className="muted small" style={{ marginBottom: 8 }}>
+              Drag & drop to reorder (codes update on reorder)
+            </div>
+            <ul className="list" style={{ maxHeight: 400, overflowY: 'auto' }}>
               {orderedPages.map((p, idx) => {
                 const isLocked = Boolean(p.locked);
                 const isSelected = p.id === selectedPage?.id;
@@ -487,51 +1042,22 @@ export default function WiringEditorV2Client(props: Props) {
                   >
                     <button
                       className={isSelected ? 'btn' : 'btn secondary'}
-                      style={{ width: '100%', justifyContent: 'space-between' }}
+                      style={{ width: '100%', justifyContent: 'space-between', fontSize: 11 }}
                       onClick={() => setSelectedPageId(p.id)}
                       type="button"
                     >
                       <span>
-                        <span className="mono">{p.code}_{p.templateId}</span> {p.title}
+                        <span className="mono">{p.code}</span> {p.title}
                       </span>
-                      {isLocked && <span className="muted small">LOCKED</span>}
+                      {isLocked && <span className="muted small">🔒</span>}
                     </button>
                   </li>
                 );
               })}
             </ul>
-
-            <div className="card" style={{ padding: 10, marginTop: 10 }}>
-              <div className="muted small" style={{ marginBottom: 6 }}>Add module page</div>
-              <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                <input
-                  className="input"
-                  placeholder="Module name"
-                  value={newModuleName}
-                  disabled={!canWrite}
-                  onChange={(e) => setNewModuleName(e.currentTarget.value)}
-                  style={{ flex: 1, minWidth: 160 }}
-                />
-                <select
-                  className="select"
-                  value={newTemplateId}
-                  disabled={!canWrite}
-                  onChange={(e) => setNewTemplateId(e.currentTarget.value as ModuleTemplateId)}
-                >
-                  {TEMPLATE_IDS.map((tid) => (
-                    <option key={tid} value={tid}>{tid}</option>
-                  ))}
-                </select>
-                <button className="btn" disabled={!canWrite || !newModuleName.trim()} onClick={addModulePage}>
-                  Add
-                </button>
-              </div>
-              <div className="muted small" style={{ marginTop: 6 }}>
-                Module pages use template terminals; you cannot add terminal rows for module pages.
-              </div>
-            </div>
           </div>
 
+          {/* RIGHT: A4 wiring diagram (per FINAL-S2) */}
           <div style={{ flex: 1 }}>{renderGrid()}</div>
         </div>
       ) : (

@@ -32,3 +32,18 @@ Tässä tiedostossa on vain aidosti avoimet kohdat. Lukitut päätökset löytyv
 ### OI-005 Väyläkaaviot + osoitelista (Target: myöhemmin)
 - Tarvitaan käyttäjältä: referenssit ja sisältövaatimukset.
 
+### OI-006 Import commit revision creation (Target: Sprint 1 followup)
+**Miksi:** Sprint 1 implements the "Import changes pending" banner and accept flow in the UI, but the backend `/api/import/commit` endpoint does not yet create a new revision on accept.
+- **Current state:** The `createRevision` form field is passed but not handled server-side.
+- **Required implementation:** When `createRevision=true`, the commit endpoint should:
+  1. Create new DocumentRevision with rev letter bump (A→B→...→Z→AA)
+  2. Store JSON snapshot as revision asset
+  3. Return the new revision ID to the client
+- **Workaround (Sprint 1):** Page reload after accept will load the new data, but revision history is not updated.
+
+### OI-007 Workbook columns reference parity (Target: Sprint 2)
+**Miksi:** The Työkirja tab columns were not updated in Sprint 1 to match `docs/ui_refs/wiring_editor_v2/Tyokirja.png`.
+- The reference shows columns: Type, Name, Description, Module ID, Channel, Label text, Invert, LED color, LED Invert, Reset counter, Thermistor, Electrical bottom, Electrical top, Eng...
+- Current columns are a simplified set from canonical rows.
+- **Required:** Map workbook columns 1:1 to golden reference.
+

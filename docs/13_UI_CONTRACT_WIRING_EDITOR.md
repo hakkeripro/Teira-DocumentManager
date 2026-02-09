@@ -27,11 +27,25 @@ Vaatimus:
   2) **Työkirja** (excelimäinen bulk-edit; sarakkeet/otsikot 1:1 referenssiin)
 
 ## Layout
-- Vasen: Pages-puu
-  - Sivut järjestyksessä, drag/drop reorder
-  - “Kansiomaiset” ryhmät ovat **vain UI-ryhmittelyä** (ei tallennu DB:hen).
-  - Kansion edessä kansio-ikoni; ryhmät avattavissa/suljettavissa.
-- Oikea: A4 portrait -sivu (print-grid), jonka mittasuhde ja sarakejako vastaa referenssejä.
+
+**FINAL-S2 (2026-01-25):** Layout-rakenne lukittu:
+
+- **Vasen**: Pages-paneeli (kortti)
+  - Pages-lista järjestyksessä, drag/drop reorder
+  - **"Add module"** -kontrolli on **vasemman kortin yläosassa** (header), ei puun sisällä eikä alaosassa
+
+- **Oikea**: A4 portrait -sivu (print-grid / canvas)
+  - A4-sivun mittasuhde ja sarakejako vastaa referenssejä
+  - **A4-kytkentäkuva renderöidään aina Pages-paneelin oikealle puolelle — ei koskaan Pages-paneelin alapuolelle.** (LOCKED)
+
+**FINAL-S1 (2026-01-25):** Folder expand/collapse -toiminto on tarkoitettu **vain päänavigaatioon** (Areas/Projects main tree).
+- Wiring editorin Pages-listassa **ei käytetä** kansioita eikä collapse/expand -UI:ta ellei erikseen määritetä.
+- Pages-lista on yksinkertainen, “flat list” -tyyppinen.
+
+### Layout acceptance (DoD / parity gate)
+- Viewportissa Pages-paneeli pysyy vasemmalla ja A4-canvas pysyy oikealla; UI ei “stackaudu” siten, että A4 siirtyisi Pages-paneelin alle.
+- Jos leveys ei riitä kahteen paneeliin, ratkaisu on **horisontaalinen scroll / overflow** (tai muu sivusuuntainen ratkaisu), ei vertikaalinen pinoutuminen.
+- “Add module” näkyy ilman scrollausta Pages-paneelin yläosassa (header).
 
 ## Sivunumerointi ja lukitus
 - AS-P-keskuksessa oletussivut:
@@ -40,24 +54,53 @@ Vaatimus:
 - Käyttäjä voi lisätä PS-sivuja myöhemmin vapaasti mihin väliin tahansa (vain oletus-PS on lukittu).
 - Moduulin lisäys UI:sta:
   - uusi moduulisivu saa aina seuraavan vapaan koodin maxin jälkeen (ei täytetä aukkoja alusta).
-- Reorder ei muuta page_codea.
+- **Reorder päivittää page_code** (address sync): sivukoodit päivittyvät uuden järjestyksen mukaisiksi.
+- Sisäiset, pysyvät ID:t eivät muutu reordertessa; vain osoite-/koodikenttä synkataan uuteen järjestykseen.
 
 ## Print-grid sarakerakenne (rakenteeltaan 1:1)
 Taulukon sarakkeet ja ryhmittely vastaa referenssiä:
 - Tunnus / Teksti (kenttälaiteblokki)
 - Liitin (monirivinen; template tuottaa "connector lines")
-- Kaapeli 1: Tyyppi/koko/nro, Välikytkentäpaikka/rimmet, Pari nro/johdin
-- Kaapeli 2: Tyyppi/koko/nro, Pari nro/johdin
-- Minne johdetaan: Liitin, Kytkentäpaikka
+- Kaapelointitiedot:
+  - Kaapeli 1 (Pari nro, Tyyppi koko nro)
+  - Välikytkentäpaikka ja liittimet
+- Kaapeli 2:
+  - Tyyppi koko nro
+  - Pari nro tai johdin
+- Minne johdetaan:
+  - Liitin
+  - Kytkentäpaikka
+- Kytketty (checkbox)
+- Tarkastettu (checkbox)
+
+### Print-grid visuaali (pariteetti)
+- Print-grid (A4-canvas) on **valkoinen** tausta, ohuet viivat, musta teksti referenssin mukaisesti.
+- A4-alueella ei käytetä “dark theme + rounded input boxes” -tyylistä ulkoasua, jos se rikkoo 95% pariteetin.
 
 ## Liitin (stacked labels) — connector lines
 
-Yksi print-rivi vastaa yhtä IO-kanavaa (terminal_code), mutta **Liitin**-solu voi sisältää useita rivejä.
+Yksi print-“terminaaliblokki” vastaa yhtä IO-kanavaa (terminal_code), mutta **Liitin**-solu voi sisältää useita rivejä.
 Nämä rivit tulevat moduulitemplatesta `connector_lines[]`.
 
 Tärkeää:
 - Data (kaapelit, destination, laitevalinta) bindataan **terminal_codeen**, ei yksittäiseen connector_lineen.
-- Connector_linet ovat tulosteen pariteettia varten.
+- Connector_lines on tulosteen pariteettia varten.
+
+### Rivikohtaisuus (rowSpan-sääntö, pariteetin kannalta lukittu)
+Kun terminal_code:lla on useita connector_lines:
+- Vain seuraavat sarakkeet ovat connector-line -rivikohtaisia (renderöidään useana rivinä):
+  - Liitin
+  - Kaapeli 1: Pari nro / johdin
+  - Välikytkentäpaikka ja liittimet
+  - Kaapeli 2: Pari nro / johdin
+  - Minne johdetaan: Liitin
+- Kaikki muut sarakkeet ovat terminaalikohtaisia ja niiden tulee “jatkua” connector-line -rivien yli (rowSpan):
+  - Tunnus, Teksti
+  - Kaapeli 1: Tyyppi koko nro
+  - Kaapeli 2: Tyyppi koko nro
+  - Minne johdetaan: Kytkentäpaikka
+  - Symboli/Piirrosmerkintä
+  - Kytketty, Tarkastettu
 
 ## Työkirja
 - Sarakkeet, otsikot ja järjestys: 1:1 referenssiin (`Tyokirja.png`).

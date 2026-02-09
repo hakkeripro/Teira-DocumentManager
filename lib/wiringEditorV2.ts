@@ -19,11 +19,30 @@ export type WiringV2TerminalSymbol = {
 };
 
 export type WiringV2TerminalRow = {
+  /** Tunnus (Tag/ID) - device identifier */
   deviceText?: string;
+  /** Teksti (Description) - device description */
+  description?: string;
+  /** Kaapeli 1: Tyyppi koko nro */
   cable1?: string;
+  /** Kaapeli 1: Pari nro tai johdin */
+  cable1Pair?: string;
+  /** Välikytkentäpaikka ja liittimet (Intermediate terminal) */
+  intermediateTerminal?: string;
+  /** Kaapeli 2: Tyyppi koko nro */
   cable2?: string;
+  /** Kaapeli 2: Pari nro tai johdin */
+  cable2Pair?: string;
+  /** Minne johdetaan: Liitin (Destination connector) */
+  destinationConnector?: string;
+  /** Minne johdetaan: Kytkentäpaikka (Destination point) */
   destination?: string;
+  /** Symboli/Piirrosmerkintä */
   symbol?: WiringV2TerminalSymbol;
+  /** Kytketty (connected checkbox) */
+  connected?: boolean;
+  /** Tarkastettu (verified checkbox) */
+  verified?: boolean;
 };
 
 export type WiringV2Page = {
@@ -130,8 +149,13 @@ export function readWiringV2State(settings: unknown): WiringV2State {
       if (!isRecord(v)) continue;
       terminals[k] = {
         deviceText: typeof v['deviceText'] === 'string' ? (v['deviceText'] as string) : undefined,
+        description: typeof v['description'] === 'string' ? (v['description'] as string) : undefined,
         cable1: typeof v['cable1'] === 'string' ? (v['cable1'] as string) : undefined,
+        cable1Pair: typeof v['cable1Pair'] === 'string' ? (v['cable1Pair'] as string) : undefined,
+        intermediateTerminal: typeof v['intermediateTerminal'] === 'string' ? (v['intermediateTerminal'] as string) : undefined,
         cable2: typeof v['cable2'] === 'string' ? (v['cable2'] as string) : undefined,
+        cable2Pair: typeof v['cable2Pair'] === 'string' ? (v['cable2Pair'] as string) : undefined,
+        destinationConnector: typeof v['destinationConnector'] === 'string' ? (v['destinationConnector'] as string) : undefined,
         destination: typeof v['destination'] === 'string' ? (v['destination'] as string) : undefined,
         symbol: isRecord(v['symbol'])
           ? {
@@ -142,6 +166,8 @@ export function readWiringV2State(settings: unknown): WiringV2State {
                   : undefined,
             }
           : undefined,
+        connected: typeof v['connected'] === 'boolean' ? v['connected'] : undefined,
+        verified: typeof v['verified'] === 'boolean' ? v['verified'] : undefined,
       };
     }
   }
